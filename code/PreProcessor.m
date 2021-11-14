@@ -39,8 +39,13 @@ classdef PreProcessor < handle
             end
         end
 
+        function obj = computeInitialData(obj,vdatafile)
+            obj.initVariableData(vdatafile);
+            obj.computeFixedCoor();
+        end
+
         function obj = compute(obj)
-            obj.computeCoor();
+            obj.computeVariableCoor();
 %             obj.connectNodes();
         end
         
@@ -54,23 +59,45 @@ classdef PreProcessor < handle
             obj.dim  = dim;
         end
         
-        function obj = computeCoor(obj)
+        function obj = computeFixedCoor(obj)
             nNodes  = obj.dim.nnod;
             nDOF    = obj.dim.ni;
             nodes   = zeros(nNodes,nDOF);
-            z_node  = obj.data.z_node;
-            Nz_node = length(z_node);
             x       = obj.data.x;
             y12     = obj.data.y12;
             y34     = obj.data.y34;
             zsup    = obj.data.zsup;
             nodes   = obj.assemblyXandYandZsup(x,y12,y34,nodes,zsup);
-            nodes   = obj.assemblyZinf(z_node,nNodes,nodes,Nz_node);
+            obj.data.nodes = nodes;
+        end
+
+        function obj = computeVariableCoor(obj)
+            nNodes  = obj.dim.nnod;
+            nodes   = obj.data.nodes;
+            z_node  = obj.data.z_node;
+            Nz_node = length(z_node);
+            for k = 1:Nz_node
+                m = 4*(k-1);
+                n = nNodes-3-m;
+                nodes(m+1,3) = z_node(k);
+                nodes(n,3)   = z_node(k);
+                nodes(m+4,3) = z_node(k);
+                nodes(n+3,3) = z_node(k);
+            end
             obj.data.nodes = nodes;
         end
 
         function obj = connectNodes(obj)
-                
+            x  = obj.data.x;
+            CN = zeros(260,2); % S'ha d'arreglar
+           for e = 1:(length(x)-1)
+                CN(e,1) = 4*(e-1) + 1;
+                CN(e,2) = 4*e + 1;
+           end
+           e = e+1;
+           CN(e,1) = 73;
+           CN(e,2) = 76;
+
         end
 
     end
@@ -90,17 +117,6 @@ classdef PreProcessor < handle
                 nodes(m+3,3) = zsup;
                 nodes(m+4,1) = x(i);
                 nodes(m+4,2) = y34;
-            end
-        end
-
-        function nodes  = assemblyZinf(z_node,nNodes,nodes,Nz_node)
-            for k = 1:Nz_node
-                m = 4*(k-1);
-                n = nNodes-3-m;
-                nodes(m+1,3) = z_node(k);
-                nodes(n,3)   = z_node(k);
-                nodes(m+4,3) = z_node(k);
-                nodes(n+3,3) = z_node(k);
             end
         end
         
