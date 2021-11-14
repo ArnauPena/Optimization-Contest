@@ -41,7 +41,7 @@ classdef PreProcessor < handle
 
         function obj = compute(obj)
             obj.computeCoor();
-            obj.connectNodes();
+%             obj.connectNodes();
         end
         
     end
@@ -49,15 +49,35 @@ classdef PreProcessor < handle
     methods (Access = private)
 
         function obj = initFixedData(obj,fdatafile)
-            run(datafile);
+            run(fdatafile);
             obj.data = data;
             obj.dim  = dim;
         end
         
         function obj = computeCoor(obj)
-            nNodes = obj.dim.nnod;
-            nDOF   = obj.dim.ni;
-            nodes  = zeros(nNodes,nDOF);
+            nNodes  = obj.dim.nnod;
+            nDOF    = obj.dim.ni;
+            nodes   = zeros(nNodes,nDOF);
+            z_node  = obj.data.z_node;
+            Nz_node = length(z_node);
+            x       = obj.data.x;
+            y12     = obj.data.y12;
+            y34     = obj.data.y34;
+            zsup    = obj.data.zsup;
+            nodes   = obj.assemblyXandYandZsup(x,y12,y34,nodes,zsup);
+            nodes   = obj.assemblyZinf(z_node,nNodes,nodes,Nz_node);
+            obj.data.nodes = nodes;
+        end
+
+        function obj = connectNodes(obj)
+                
+        end
+
+    end
+
+    methods (Static, Access = private)
+
+        function nodes  = assemblyXandYandZsup(x,y12,y34,nodes,zsup)
             for i = 1:length(x)
                 m = 4*(i-1);
                 nodes(m+1,1) = x(i);
@@ -71,7 +91,10 @@ classdef PreProcessor < handle
                 nodes(m+4,1) = x(i);
                 nodes(m+4,2) = y34;
             end
-            for k = 1:Nz_el
+        end
+
+        function nodes  = assemblyZinf(z_node,nNodes,nodes,Nz_node)
+            for k = 1:Nz_node
                 m = 4*(k-1);
                 n = nNodes-3-m;
                 nodes(m+1,3) = z_node(k);
@@ -79,11 +102,6 @@ classdef PreProcessor < handle
                 nodes(m+4,3) = z_node(k);
                 nodes(n+3,3) = z_node(k);
             end
-            obj.data.nodes = nodes;
-        end
-
-        function obj = connectNodes(obj)
-
         end
         
     end
