@@ -42,8 +42,13 @@ classdef Visualizer < handle
             z    = obj.Z;
             figure
             hold on
-            axis equal;
             plot3(x(Tn)',y(Tn)',z(Tn)','-k','linewidth',0.5);
+            view(45,20);
+            xlim([0 18*4e3]);
+            zlim([-25e3 5e3]);
+            ylim([0 4000]);
+            hold off
+
         end
         
     end

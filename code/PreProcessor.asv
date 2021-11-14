@@ -42,7 +42,11 @@ classdef PreProcessor < handle
         function obj = computeInitialData(obj,vdatafile)
             obj.initVariableData(vdatafile);
             obj.computeFixedCoor();
-%             obj.connectNodes();
+        end
+
+        function obj = compute(obj)
+            obj.computeVariableCoor();
+            obj.connectNodes();
         end
         
     end
@@ -84,15 +88,48 @@ classdef PreProcessor < handle
         end
 
         function obj = connectNodes(obj)
-            x  = obj.data.x;
-            CN = zeros(260,2); % S'ha d'arreglar
-           for e = 1:(length(x)-1)
-                CN(e,1) = 4*(e-1) + 1;
-                CN(e,2) = 4*e + 1;
-           end
-           e = e+1;
-           CN(e,1) = 73;
-           CN(e,2) = 76;
+            x    = obj.data.x;
+            k1   = length(x) - 1;
+            k2   = k1 + 1;
+            k3   = k1/2;
+            iEl  = [1:k1];
+            iEl2 = [1:k2];
+            iEl3 = [1:k3];
+            Tn1 = zeros(k1,2);            
+            Tn1(1:k1,1) = 4*(iEl-1) + 1;
+            Tn1(1:k1,2) = 4*iEl + 1;
+            Tn2(1:k1,1) = 4*iEl;
+            Tn2(1:k1,2) = 4*iEl + 4;
+            Tn3(1:k1,1) = 4*(iEl-1) + 2;
+            Tn3(1:k1,2) = 4*iEl + 2;
+            Tn4(1:k1,1) = 4*iEl - 1;
+            Tn4(1:k1,2) = 4*iEl + 3;
+            Tn5(1:k2,1) = 4*(iEl2-1) + 1;
+            Tn5(1:k2,2) = 4*iEl2;
+            Tn6(1:k2,1) = 4*(iEl2-1) + 2;
+            Tn6(1:k2,2) = 4*iEl2 - 1;
+            Tn7(1:k2,1) = 4*(iEl2-1) + 1;
+            Tn7(1:k2,2) = 4*(iEl2-1) + 2;            
+            Tn8(1:k2,1) = 4*iEl2 - 1;
+            Tn8(1:k2,2) = 4*iEl2;
+            Tn9(1:k3,1) = 4*(iEl3-1) + 2;
+            Tn9(1:k3,2) = 4*iEl3 + 1;
+            Tn10(1:k3,1) = 4*iEl3 - 1;
+            Tn10(1:k3,2) = 4*iEl3 + 4;
+            Tn11(1:k3,1) = 4*(iEl3-1) + 37;
+            Tn11(1:k3,2) = 4*iEl3 + 38;
+            Tn12(1:k3,1) = 4*(iEl3-1) + 40;
+            Tn12(1:k3,2) = 4*(iEl3-1) + 43;
+            Tn13(1:k1,1) = 4*(iEl-1) + 1;%
+            Tn13(1:k1,2) = 4*iEl + 4;
+            Tn14(1:k1,1) = 4*iEl;
+            Tn14(1:k1,2) = 4*iEl + 1;
+            Tn15(1:k1,1) = 4*(iEl-1) + 2;
+            Tn15(1:k1,2) = 4*iEl + 3;
+            Tn16(1:k1,1) = 4*iEl - 1;
+            Tn16(1:k1,2) = 4*iEl + 2;
+
+            Tn = [Tn1;Tn2;Tn3;Tn4;Tn5;Tn6;Tn7;Tn8;Tn9;Tn10;Tn11;Tn12;Tn13;Tn14;Tn15];
 
         end
 

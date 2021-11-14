@@ -21,7 +21,7 @@ dim.ndof = dim.nnod*dim.ni;  % Total number of degrees of freedom
 data.zsup = 4000;                             % Fixed upper nodes z coor (mm)
 data.y12  = 0;                                % Right part nodes y coor (mm)
 data.y34  = 4000;                             % Left part nodes y coor (mm)
-data.x    = linspace(0,18000,dim.nnod/nNodx); % x coor vector (mm)
+data.x    = linspace(0,18*4e3,dim.nnod/nNodx); % x coor vector (mm)
 
 
 % FIXED NODES MATRIX
