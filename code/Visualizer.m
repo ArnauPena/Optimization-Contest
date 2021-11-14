@@ -36,14 +36,14 @@ classdef Visualizer < handle
         end
        
         function obj = visualize(obj)
-            Tnod = obj.data.Tnod;
+            Tn   = obj.data.nodalconnec;
             x    = obj.X;
             y    = obj.Y;
             z    = obj.Z;
             figure
             hold on
             axis equal;
-            plot3(x(Tnod)',y(Tnod)',z(Tnod)','-k','linewidth',0.5);
+            plot3(x(Tn)',y(Tn)',z(Tn)','-k','linewidth',0.5);
         end
         
     end
