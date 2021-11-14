@@ -43,7 +43,7 @@ classdef Visualizer < handle
             figure
             hold on
             plot3(x(Tn)',y(Tn)',z(Tn)','-k','linewidth',0.5);
-            view(45,20);
+            view(5,5);
             xlim([0 18*4e3]);
             zlim([-25e3 5e3]);
             ylim([0 4000]);
