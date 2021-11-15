@@ -46,7 +46,12 @@ classdef PreProcessor < handle
 
         function obj = compute(obj)
             obj.computeVariableCoor();
-                        obj.connectNodes();
+            obj.connectNodes();
+        end
+
+        function obj = computeUpdated(obj,cParams)
+            obj.updateVariableData(cParams);
+            obj.computeVariableCoor();
         end
         
     end

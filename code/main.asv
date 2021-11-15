@@ -44,7 +44,8 @@ function [displ, stress] = calculateResults(file1,file2,opt)
     Smat = buildSmat(pre);
     sects = Smat * pre.data.materials.Si(:,1);
     inerc = Smat * pre.data.materials.Si(:,2);
-    s.materials = [ones(260,1)*pre.data.materials.E, sects, ones(260,1)*pre.data.materials.rho, inerc];
+    s.ma
+
 
     s.data = pre.data;
     s.dim  = pre.dim;
