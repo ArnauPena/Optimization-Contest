@@ -7,3 +7,4 @@ s.data = a.data;
 s.dim  = a.dim;
 b = Visualizer(s);
 b.compute();
+

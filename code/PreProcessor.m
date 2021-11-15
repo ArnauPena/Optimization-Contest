@@ -42,10 +42,15 @@ classdef PreProcessor < handle
         function obj = computeInitialData(obj,vdatafile)
             obj.initVariableData(vdatafile);
             obj.computeFixedCoor();
-            obj.connectNodes();
         end
 
         function obj = compute(obj)
+            obj.computeVariableCoor();
+            obj.connectNodes();
+        end
+
+        function obj = computeUpdated(obj,cParams)
+            obj.updateVariableData(cParams);
             obj.computeVariableCoor();
         end
         

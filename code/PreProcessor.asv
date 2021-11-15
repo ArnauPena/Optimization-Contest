@@ -46,7 +46,7 @@ classdef PreProcessor < handle
 
         function obj = compute(obj)
             obj.computeVariableCoor();
-            obj.connectNodes();
+                        obj.connectNodes();
         end
         
     end
@@ -94,8 +94,7 @@ classdef PreProcessor < handle
             k3   = k1/2;
             iEl  = [1:k1];
             iEl2 = [1:k2];
-            iEl3 = [1:k3];
-            Tn1 = zeros(k1,2);            
+            iEl3 = [1:k3];           
             Tn1(1:k1,1) = 4*(iEl-1) + 1;
             Tn1(1:k1,2) = 4*iEl + 1;
             Tn2(1:k1,1) = 4*iEl;
@@ -120,7 +119,7 @@ classdef PreProcessor < handle
             Tn11(1:k3,2) = 4*iEl3 + 38;
             Tn12(1:k3,1) = 4*(iEl3-1) + 40;
             Tn12(1:k3,2) = 4*(iEl3-1) + 43;
-            Tn13(1:k1,1) = 4*(iEl-1) + 1;%
+            Tn13(1:k1,1) = 4*(iEl-1) + 1;
             Tn13(1:k1,2) = 4*iEl + 4;
             Tn14(1:k1,1) = 4*iEl;
             Tn14(1:k1,2) = 4*iEl + 1;
@@ -128,9 +127,12 @@ classdef PreProcessor < handle
             Tn15(1:k1,2) = 4*iEl + 3;
             Tn16(1:k1,1) = 4*iEl - 1;
             Tn16(1:k1,2) = 4*iEl + 2;
-
-            Tn = [Tn1;Tn2;Tn3;Tn4;Tn5;Tn6;Tn7;Tn8;Tn9;Tn10;Tn11;Tn12;Tn13;Tn14;Tn15];
-
+            Tn17(1,1:2)  = [4,2];
+            Tn17(2,1:2)  = [1,3];
+            Tn17(3,1:2)  = [73,75];
+            Tn17(4,1:2)  = [76,74];
+            Tn = [Tn1;Tn2;Tn3;Tn4;Tn5;Tn6;Tn7;Tn8;Tn9;Tn10;Tn11;Tn12;Tn13;Tn14;Tn15;Tn16;Tn17];
+            obj.data.nodalconnec = Tn;
         end
 
     end
