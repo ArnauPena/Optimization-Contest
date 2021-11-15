@@ -31,7 +31,7 @@ classdef Mesh < handle
         
         function createBars(obj)
             nel = obj.dim.nel;
-            barsMat = zeros(nel, 12);
+            barsMat = zeros(nel, 13);
             for iElem = 1:nel
                 s.data = obj.data;
                 bar = Bar(s);
@@ -66,7 +66,7 @@ classdef Mesh < handle
         function a = fillBarsMatrix(bar)
             [x1, y1, z1, x2, y2, z2] = bar.getNodeCoordinates();
             [rho, E, A, Iz] = bar.getMaterialData();
-            sig = bar.getBucklingStress();
+            [buck, yield] = bar.getCriticalStresses();
             a(1) = x1;
             a(2) = x2;
             a(3) = y1;
@@ -78,7 +78,8 @@ classdef Mesh < handle
             a(9) = E;
             a(10) = A;
             a(11) = Iz;
-            a(12) = sig;
+            a(12) = buck;
+            a(13) = yield;
         end
     end
 end

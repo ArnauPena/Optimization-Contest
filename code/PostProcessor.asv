@@ -24,9 +24,8 @@ classdef PostProcessor < handle
             obj.data = cParams.data;
             obj.dim  = cParams.dim;
             obj.FEM = cParams.FEM;
-            if (cParams.graph == 1)
-                obj.initVisualizer();
-            end
+            obj.graph
+            obj.initVisualizer();
             buckle = obj.computeBuckling();
             yield  = obj.computeYield();
             mass   = obj.calculateMass();

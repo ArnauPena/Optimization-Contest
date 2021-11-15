@@ -42,6 +42,7 @@ classdef PreProcessor < handle
         function obj = computeInitialData(obj,vdatafile)
             obj.initVariableData(vdatafile);
             obj.computeFixedCoor();
+            obj.computeMaterialData();
         end
 
         function obj = compute(obj)
@@ -138,6 +139,29 @@ classdef PreProcessor < handle
             Tn17(4,1:2)  = [76,74];
             Tn = [Tn1;Tn2;Tn3;Tn4;Tn5;Tn6;Tn7;Tn8;Tn9;Tn10;Tn11;Tn12;Tn13;Tn14;Tn15;Tn16;Tn17];
             obj.data.nodalconnec = Tn;
+        end
+
+        function computeMaterialData(obj)
+            Smat = obj.computeElementIDMatrix();
+            sects = Smat * obj.data.materials.Si(:,1);
+            inerc = Smat * obj.data.materials.Si(:,2);
+            obj.data.materials = [ones(260,1)*obj.data.materials.E, ...
+                sects, ...
+                ones(260,1)*obj.data.materials.rho, ...
+                inerc, ...
+                ones(260,1)*obj.data.materials.yield];
+        end
+
+        function Smat = computeElementIDMatrix (obj)
+            Sel = obj.data.Sel;
+            sections = obj.data.materials.Si(:,1);
+            nel = obj.dim.nel;
+            nprofiles = size(sections,1);
+            Smat = sparse(nel, nprofiles);
+            for i = 1:nel
+                id = Sel(i);
+                Smat(i, id) = 1;
+            end
         end
 
     end

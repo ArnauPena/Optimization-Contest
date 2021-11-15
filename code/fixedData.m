@@ -29,8 +29,8 @@ data.fixnod = [
     1,  1, 0; 
     1,  2, 0; 
     1,  3, 0;
-    4,  1, 0; 
-    4,  2, 0; 
+    4,  1, 0;
+    4,  2, 0;
     4,  3, 0;
     73, 1, 0;
     73, 2, 0;
@@ -156,4 +156,4 @@ data.materials.Si  = [1.6129e2, I1;    %(1)
                         ];
 data.materials.rho = 7.85e-6; % Density (kg/mm3)
 data.materials.E   = 200e3;   % Young Modulus (MPa)
-
+data.materials.yield  = 248.2; % Yield stress (MPa) 

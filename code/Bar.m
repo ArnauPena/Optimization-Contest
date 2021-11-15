@@ -10,7 +10,7 @@ classdef Bar < handle
         x2, y2, z2
         E, A, Iz, rho
         RotationMatrix, KBase, KElem
-        bucklingStress
+        bucklingStress, yield
     end
     
     methods(Access = public)
@@ -34,6 +34,7 @@ classdef Bar < handle
             obj.A   = mat(e,2);
             obj.rho = mat(e,3);
             obj.Iz  = mat(e,4);
+            obj.yield = mat(e,5);
             obj.length         = obj.calculateBarLength();
             obj.RotationMatrix = obj.calculateRotationMatrix();
             obj.KBase          = obj.calculateEuclideanStiffnessMatrix();
@@ -82,8 +83,9 @@ classdef Bar < handle
             A = obj.A;
         end
         
-        function sig = getBucklingStress(obj)
-            sig = obj.bucklingStress;
+        function [buck, yield] = getCriticalStresses(obj)
+            buck = obj.bucklingStress;
+            yield = obj.yield;
         end
 
     end

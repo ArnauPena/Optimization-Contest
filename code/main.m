@@ -17,30 +17,13 @@ clc; clear; close all;
 file1 = 'fixedData.m';
 file2 = 'variableInitialData.m';
 opt   = 1;
-[displ, stress] = calculateResults(file1,file2,opt);
+[displ, stress] = calculateResults(file1,file2,opt, 1);
 
-function Smat = buildSmat (prepro)
-    Sel = prepro.data.Sel;
-    sections = prepro.data.materials.Si(:,1);
-    nel = prepro.dim.nel;
-    nprofiles = size(sections,1);
-    Smat = sparse(nel, nprofiles);
-    for i = 1:nel
-        id = Sel(i);
-        Smat(i, id) = 1;
-    end
-
-end
-
-function [displ, stress] = calculateResults(file1,file2,opt)
+function [displ, stress] = calculateResults(file1,file2,opt, graph)
     pre = PreProcessor(file1);
     pre.computeInitialData(file2);
     pre.compute();
     pre.computeForceCase(opt);
-    Smat = buildSmat(pre);
-    sects = Smat * pre.data.materials.Si(:,1);
-    inerc = Smat * pre.data.materials.Si(:,2);
-    pre.data.materials = [ones(260,1)*pre.data.materials.E, sects, ones(260,1)*pre.data.materials.rho, inerc];
 
     s.data = pre.data;
     s.dim  = pre.dim;
@@ -50,5 +33,6 @@ function [displ, stress] = calculateResults(file1,file2,opt)
     displ = FEM.displacement;
     stress = FEM.stress;
     s.FEM = FEM;
+    s.graph = graph;
     post = PostProcessor(s);
 end
