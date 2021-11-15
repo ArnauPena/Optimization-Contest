@@ -42,11 +42,11 @@ classdef PreProcessor < handle
         function obj = computeInitialData(obj,vdatafile)
             obj.initVariableData(vdatafile);
             obj.computeFixedCoor();
+            obj.connectNodes();
         end
 
         function obj = compute(obj)
             obj.computeVariableCoor();
-            obj.connectNodes();
         end
         
     end
@@ -119,7 +119,7 @@ classdef PreProcessor < handle
             Tn11(1:k3,2) = 4*iEl3 + 38;
             Tn12(1:k3,1) = 4*(iEl3-1) + 40;
             Tn12(1:k3,2) = 4*(iEl3-1) + 43;
-            Tn13(1:k1,1) = 4*(iEl-1) + 1;%
+            Tn13(1:k1,1) = 4*(iEl-1) + 1;
             Tn13(1:k1,2) = 4*iEl + 4;
             Tn14(1:k1,1) = 4*iEl;
             Tn14(1:k1,2) = 4*iEl + 1;
