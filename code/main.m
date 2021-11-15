@@ -17,9 +17,9 @@ clc; clear; close all;
 file1 = 'fixedData.m';
 file2 = 'variableInitialData.m';
 opt   = 1;
-[displ, stress] = calculateResults(file1,file2,opt, 1);
+[displ, stress] = calculateResults(file1,file2,opt, 'STRESS');
 
-function [displ, stress] = calculateResults(file1,file2,opt, graph)
+function [displ, stress] = calculateResults(file1,file2,opt, plottingMode)
     pre = PreProcessor(file1);
     pre.computeInitialData(file2);
     pre.compute();
@@ -33,6 +33,6 @@ function [displ, stress] = calculateResults(file1,file2,opt, graph)
     displ = FEM.displacement;
     stress = FEM.stress;
     s.FEM = FEM;
-    s.graph = graph;
+    s.plottingMode = plottingMode;
     post = PostProcessor(s);
 end

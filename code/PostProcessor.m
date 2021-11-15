@@ -7,7 +7,7 @@ classdef PostProcessor < handle
         data
         dim
         FEM
-        visualizer
+        visualizer, plottingMode
     end
     
     methods (Access = public)
@@ -23,10 +23,9 @@ classdef PostProcessor < handle
         function init(obj, cParams)
             obj.data = cParams.data;
             obj.dim  = cParams.dim;
-            obj.FEM = cParams.FEM;
-            if (cParams.graph == 1)
-                obj.initVisualizer();
-            end
+            obj.FEM  = cParams.FEM;
+            obj.plottingMode = cParams.plottingMode;
+            obj.initVisualizer();
             buckle = obj.computeBuckling();
             yield  = obj.computeYield();
             mass   = obj.calculateMass();
@@ -35,8 +34,20 @@ classdef PostProcessor < handle
         function initVisualizer(obj)
             s.data = obj.data;
             s.dim  = obj.dim;
+            s.FEM  = obj.FEM;
             obj.visualizer = Visualizer(s);
             obj.visualizer.initialize();
+            mode = obj.plottingMode;
+            switch mode
+                case 'NONE'
+                    % do nothing
+                case 'NODES'
+                    obj.visualizer.plotNodes();
+                case 'STRESS'
+                    obj.visualizer.plotStress();
+                otherwise
+                    warning('Wrong plotting mode selected!');
+            end
         end
 
         function mass = calculateMass(obj)
