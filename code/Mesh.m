@@ -2,6 +2,7 @@ classdef Mesh < handle
 
     properties (Access = public)
         bars
+        barsMatrix
         connectivities
         mass
     end
@@ -17,19 +18,6 @@ classdef Mesh < handle
             obj.init(cParams);
         end
 
-        function calculateMass(obj)
-            nel = obj.dim.nel;
-            m = 0;
-            for iElem = 1:nel
-                bar = obj.bars(iElem);
-                len = bar.length;
-                sec = bar.getSection();
-                rho = 3;
-                m = m + rho * len * sec;
-            end
-            obj.mass = m;
-        end
-
     end
     
     methods (Access = private)
@@ -39,18 +27,20 @@ classdef Mesh < handle
             obj.data = cParams.data;
             obj.createBars();
             obj.computeConnectivities();
-            obj.calculateMass();
         end
         
         function createBars(obj)
             nel = obj.dim.nel;
+            barsMat = zeros(nel, 12);
             for iElem = 1:nel
                 s.data = obj.data;
                 bar = Bar(s);
                 bar.create(iElem);
                 elems(iElem, 1) = bar;
+                barsMat(iElem,:) = obj.fillBarsMatrix(bar);
             end
             obj.bars = elems;
+            obj.barsMatrix = barsMat;
         end
         
         function computeConnectivities(obj)
@@ -69,7 +59,27 @@ classdef Mesh < handle
             end
             obj.connectivities = T;
         end
+    end
 
+    methods (Static,Access = private)
+
+        function a = fillBarsMatrix(bar)
+            [x1, y1, z1, x2, y2, z2] = bar.getNodeCoordinates();
+            [rho, E, A, Iz] = bar.getMaterialData();
+            sig = bar.getBucklingStress();
+            a(1) = x1;
+            a(2) = x2;
+            a(3) = y1;
+            a(4) = y2;
+            a(5) = z1;
+            a(6) = z2;
+            a(7) = bar.length;
+            a(8) = rho;
+            a(9) = E;
+            a(10) = A;
+            a(11) = Iz;
+            a(12) = sig;
+        end
     end
 end
 

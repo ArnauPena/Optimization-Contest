@@ -13,6 +13,7 @@ clc; clear; close all;
 
 % z = [zeros(2,1); 0.8*ones(5,1)];
 % S = [ones(11,1); 2*ones(6,1)];
+
 file1 = 'fixedData.m';
 file2 = 'variableInitialData.m';
 opt   = 1;
@@ -32,11 +33,6 @@ function Smat = buildSmat (prepro)
 end
 
 function [displ, stress] = calculateResults(file1,file2,opt)
-%     run(filename)
-%     data.matconnec = sects;
-%     data.nodes(:,3) = zeds;
-%     s.dim        = dim;
-%     s.data       = data;
     pre = PreProcessor(file1);
     pre.computeInitialData(file2);
     pre.compute();
@@ -44,15 +40,15 @@ function [displ, stress] = calculateResults(file1,file2,opt)
     Smat = buildSmat(pre);
     sects = Smat * pre.data.materials.Si(:,1);
     inerc = Smat * pre.data.materials.Si(:,2);
-    s.materials = [ones(260,1)*pre.data.materials.E, sects, ones(260,1)*pre.data.materials.rho, inerc];
+    pre.data.materials = [ones(260,1)*pre.data.materials.E, sects, ones(260,1)*pre.data.materials.rho, inerc];
 
     s.data = pre.data;
     s.dim  = pre.dim;
     s.solvertype = 'DIRECT'; % ITERATIVE
-    view = Visualizer(s);
-    view.compute();
     FEM = FEMAnalyzer(s);
     FEM.perform();
     displ = FEM.displacement;
     stress = FEM.stress;
+    s.FEM = FEM;
+    post = PostProcessor(s);
 end

@@ -11,11 +11,11 @@ classdef Visualizer < handle
     methods (Access = public)
         
         function obj = Visualizer(cParams)
-            obj.init(cParams)           
+            obj.init(cParams)
         end
         
-        function obj = compute(obj)
-            obj.preCompute();
+        function obj = initialize(obj)
+            obj.getNodeData();
             obj.visualize();
         end
         
@@ -28,7 +28,7 @@ classdef Visualizer < handle
             obj.dim  = cParams.dim;
         end
         
-        function obj = preCompute(obj)
+        function obj = getNodeData(obj)
             nodes = obj.data.nodes;
             obj.X = nodes(:,1);
             obj.Y = nodes(:,2);

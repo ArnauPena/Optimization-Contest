@@ -18,7 +18,7 @@ classdef StressComputer < handle
             obj.init(cParams);
         end
 
-        function obj = compute(obj)
+        function obj = computeStress(obj)
             str = zeros(obj.dim.nel, 1);
             bars = obj.mesh.bars;
             for iElem = 1:obj.dim.nel

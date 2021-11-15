@@ -12,7 +12,7 @@ classdef PreProcessor < handle
     methods (Access = public)
         
         function obj = PreProcessor(fdatafile)
-            obj.initFixedData(fdatafile);        
+            obj.initFixedData(fdatafile);
         end
 
         function obj = initVariableData(obj,vdatafile)

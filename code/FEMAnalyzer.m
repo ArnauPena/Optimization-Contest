@@ -3,6 +3,7 @@ classdef FEMAnalyzer < handle
     properties(SetAccess = private, GetAccess = public)
         displacement
         stress
+        mesh
     end
     
     properties(Access = private)
@@ -13,7 +14,6 @@ classdef FEMAnalyzer < handle
         K, KElem, KGlobal
         F, Fext
         dim
-        mesh
     end
     
     methods(Access = public)
@@ -104,7 +104,7 @@ classdef FEMAnalyzer < handle
             s.connectivities = obj.connectivities;
             s.KElem = obj.KElem;
             SC = StressComputer(s);
-            SC.compute();
+            SC.computeStress();
             obj.stress = SC.stress;
         end
         

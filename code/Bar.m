@@ -8,8 +8,9 @@ classdef Bar < handle
         data
         x1, y1, z1
         x2, y2, z2
-        E, A, Iz
+        E, A, Iz, rho
         RotationMatrix, KBase, KElem
+        bucklingStress
     end
     
     methods(Access = public)
@@ -22,21 +23,22 @@ classdef Bar < handle
             X    = obj.data.nodes;
             nod1 = obj.data.nodalconnec(e,1);
             nod2 = obj.data.nodalconnec(e,2);
-            Mat  = obj.data.materials;
-            Tm   = obj.data.matconnec(e);
+            mat  = obj.data.materials;
             obj.x1 = X(nod1, 1);
             obj.x2 = X(nod2, 1);
             obj.y1 = X(nod1, 2);
             obj.y2 = X(nod2, 2);
             obj.z1 = X(nod1, 3);
             obj.z2 = X(nod2, 3);
-            obj.E  = Mat(Tm,1);
-            obj.A  = Mat(Tm,2);
-            obj.Iz = Mat(Tm,3);
-            obj.length  = obj.calculateBarLength();
+            obj.E   = mat(e,1);
+            obj.A   = mat(e,2);
+            obj.rho = mat(e,3);
+            obj.Iz  = mat(e,4);
+            obj.length         = obj.calculateBarLength();
             obj.RotationMatrix = obj.calculateRotationMatrix();
-            obj.KBase = obj.calculateEuclideanStiffnessMatrix();
-            obj.KElem = obj.rotateStiffnessMatrix();
+            obj.KBase          = obj.calculateEuclideanStiffnessMatrix();
+            obj.KElem          = obj.rotateStiffnessMatrix();
+            obj.bucklingStress = obj.calculateCriticalBucklingStress();
         end
         
         function Re = getRotationMatrix(obj)
@@ -69,7 +71,8 @@ classdef Bar < handle
             z2 = obj.z2;
         end
         
-        function [E, A, Iz] = getMaterialData(obj)
+        function [rho, E, A, Iz] = getMaterialData(obj)
+            rho = obj.rho;
             E = obj.E;
             A = obj.getSection();
             Iz = obj.Iz;
@@ -78,12 +81,13 @@ classdef Bar < handle
         function A = getSection(obj)
             A = obj.A;
         end
+        
+        function sig = getBucklingStress(obj)
+            sig = obj.bucklingStress;
+        end
 
     end
 
-    methods(Access = protected)
-    end
-    
     methods(Access = private)
         
         function init(obj, cParams)
@@ -104,6 +108,10 @@ classdef Bar < handle
             R = obj.RotationMatrix;
             K = obj.KBase;
             Ke = transpose(R) * K * R;
+        end
+
+        function sig = calculateCriticalBucklingStress(obj)
+            sig = (pi^2 * obj.E * obj.Iz)/(obj.A * obj.length^2);
         end
         
     end
