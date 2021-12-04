@@ -36,5 +36,3 @@ x   = [x1;x2];
 % Comprovació
 b = Aeq*x;
 
-
-
