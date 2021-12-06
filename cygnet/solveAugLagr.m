@@ -9,6 +9,9 @@ function solveAugLagr
     rho_sig = 1;
 %     s0      = 0.99*ones(1,345);
     s0      = rand(1,345);
+    x0 = s0*(37-1) + 1;
+    x0 = round(x0);
+    [w0,~,~] = ISCSO_2021(x0,0);
     dS      = 5;
     % Inital point
     [c,c_u,c_sig,La0]    = computeParameters(s0,l_u,l_sig,rho_u,rho_sig);
@@ -56,6 +59,10 @@ function solveAugLagr
         l_sig  = l_sig0 + rho_sig*max(-l_sig0/rho_sig,c_sig);
         [c,c_u,c_sig,La] = computeParameters(s,l_u,l_sig,rho_u,rho_sig);
         [~,~,~,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
+
+        cost_gradient = (c - w0)/dS;
+        w0 = c;
+
         dS  = norm(s-s0)/norm(s0);
         s0  = s;
         La0 = La;
