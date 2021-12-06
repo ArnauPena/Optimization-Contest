@@ -2,7 +2,7 @@
 tol       = 1e-3;
 l_u       = 0;
 l_sig     = 0;
-rho_u     = 10000;
+rho_u     = 1000;
 rho_sig   = 1000;
 s0        = 0.99*ones(1,345);
 % s0        = rand(1,345);

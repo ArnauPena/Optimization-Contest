@@ -98,16 +98,18 @@ end
 
 function A = computeSection(s,sec)
     sections = sec;
-    Amin     = min(sections);
     Amax     = max(sections);
+    Amin     = min(sections)/Amax;
+    Amax     = 1;
     p        = 3;
     A        = Amin * (1-s.^p) + s.^p * Amax;
 end
 
 function gradA = computeSectionGradient(s,sec)
     sections = sec;
-    Amin     = min(sections);
     Amax     = max(sections);
+    Amin     = min(sections)/Amax;
+    Amax     = 1;
     p        = 3;
     gradA    = - Amin * p * s.^(p-1) + Amax * p*s.^(p-1);
 end
