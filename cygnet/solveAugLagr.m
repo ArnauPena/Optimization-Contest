@@ -29,7 +29,7 @@ function solveAugLagr
             if norm(La) < norm(La0)
                 rightStepLength = 1;
             else
-                La0 = La;
+%                 La0 = La;
                 tau = tau/2;
             end
         end
@@ -41,6 +41,7 @@ function solveAugLagr
         [~,~,~,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
         dS = norm(s-s0)/norm(s0);
         s0 = s;
+        La0 = La;
     end
 end
 
