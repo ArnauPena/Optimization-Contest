@@ -9,7 +9,6 @@ end
 function createObjectiveGraph(iter,objective, w0)
     subplot(2,2,1)
     plot(iter,objective, 'Color', '#0072BD')
-    hold on;
     w0plot = w0*ones(length(iter));
     plot(iter,w0plot,'--','Color', '#D95319')
     title('Objective function');
@@ -17,18 +16,19 @@ end
 
 function createSectionDistributionGraph(sections)
     subplot(2,2,2)
-    freqs = freq(sections);
-    bar([1:1:37], freqs)
+    bar(sections);
+    ylim([1 37]);
     title('Bar sections');
 end
 
 function createVioGraph(iter, stressvio, dispvio)
     subplot(2,2,3)
-    plot(iter,stressvio,'Color', '#0072BD')
     hold on
+    plot(iter,stressvio,'Color', '#0072BD')
     plot(iter,dispvio,'Color', '#D95319')
     title('Stress violation');
     legend('stress', 'disp')
+    hold off
 end
 
 function createTotalVioGraph(iter, totalvio)
