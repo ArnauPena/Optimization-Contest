@@ -128,3 +128,17 @@ function gradA = computeSectionGradient(s,sec)
     p        = 3;
     gradA    = - Amin * p * s.^(p-1) + Amax * p*s.^(p-1);
 end
+
+function [dC, dV1, dV2] = calculateFiniteGradient(s)
+    x0 = calculateSectionID(s);
+    [c0, v10, v20] = ISCSO_2021(x0,0);
+    for i = 1:numel(s)
+        s(i) = s(i)+1/37;
+        x = calculateSectionID(s);
+        [c, v1, v2] = ISCSO_2021(x,0);
+        ds = 1/37;
+        dC(i)  = (c-c0) / (ds);
+        dV1(i) = (v1-v10) / (ds);
+        dV2(i) = (v2-v20) / (ds);
+    end
+end
