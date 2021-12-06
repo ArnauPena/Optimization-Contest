@@ -2,6 +2,7 @@
 
 function solveAugLagr
     [sec]   = computeSectionData;
+    method = 'finite diferences';
     run("auglagrData.m");
     [w,~,~] = ISCSO_2021(x0,0);
     w0      = w;
@@ -9,7 +10,7 @@ function solveAugLagr
     monitor = figure(1);
     iter = 0;
     [c,c_u,c_sig,LaNew] = computeParameters(s0,l_u,l_sig,rho_u,rho_sig);
-    [~,~,~,dLa]         = computeParametersGradient(s0,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
+    [~,~,~,dLa]         = computeParametersGradient(s0,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig,method);
     [cost, const_u, const_sig, lu, lsig, tauV] = computeMonitoring(c,c_u,c_sig,l_u,l_sig,tau,w0,iter,s0,...
             cost,const_u,const_sig,lu,lsig,tauV,monitor);
     iter = iter + 1;
@@ -18,7 +19,7 @@ function solveAugLagr
         [tau, c_u, c_sig, s]  = determineStepLength(s0,l_u,l_sig,rho_u,rho_sig,tau,LaNew,dLa);
         [l_u, l_sig]          = updateMultipliers(l_u, l_sig, rho_u, rho_sig, c_u, c_sig);
         [c,c_u,c_sig,LaTrial] = computeParameters(s,l_u,l_sig,rho_u,rho_sig);
-        [~,~,~,dLa]           = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
+        [~,~,~,dLa]           = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig,method);
         [cost, const_u, const_sig, lu, lsig, tauV] = computeMonitoring(c,c_u,c_sig,l_u,l_sig,tau,w0,iter,s,...
             cost, const_u, const_sig, lu, lsig, tauV, monitor);
         cost_gradient = (c - wNew)/dS;
@@ -78,12 +79,19 @@ function [c,c_u,c_sig,La] = computeParameters(s,l_u,l_sig,rho_u,rho_sig)
     La    = c + l_u*c_u + 0.5*rho_u*c_u^2 + l_sig*c_sig + 0.5*rho_sig*c_sig^2;        
 end
 
-function [dc,dc_u,dc_sig,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig)
-    dA     = computeSectionGradient(s,sec);
-    A      = computeSection(s,sec);
-    dc     = dA;
-    dc_u   = -dA./A.^2;
-    dc_sig = -dA./A.^2;
+function [dc,dc_u,dc_sig,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig,method)
+    switch method
+        case 'approach'
+            dA     = computeSectionGradient(s,sec);
+            A      = computeSection(s,sec);
+            dc     = dA;
+            dc_u   = -dA./A.^2;
+            dc_sig = -dA./A.^2;
+        case 'finite diferences'
+            [dc, dc_sig, dc_u] = calculateFiniteGradient(s);
+        otherwise
+            error('Method not implemented')
+    end
     dLa    = dc + (l_u + rho_u*c_u).*dc_u + (l_sig + rho_sig*c_sig).*dc_sig;
 end
 
