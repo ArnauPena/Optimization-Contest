@@ -3,19 +3,30 @@
 function solveAugLagr
     [sec]   = computeSectionData;
     tol     = 1e-3;
-    l_u     = 30;
-    l_sig   = 30;
+    l_u     = 0.1;
+    l_sig   = 0.1;
     rho_u   = 1;
     rho_sig = 1;
-    s0      = 0.99*ones(1,345);
+%     s0      = 0.99*ones(1,345);
+    s0      = rand(1,345);
     dS      = 5;
+    % Inital point
     [c,c_u,c_sig,La0]    = computeParameters(s0,l_u,l_sig,rho_u,rho_sig);
-    [dc,dc_u,dc_sig,dLa] = computeParametersGradient(s0,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
+    [~,~,~,dLa] = computeParametersGradient(s0,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
     iter = 0;
     while dS > tol || c_u > 0 || c_sig > 0
+        % Display info
+        disp('Iteration: ');
+        disp(num2str(iter));
+        disp('Weight: ');
         disp(num2str(c));
+%         disp('Augmented Lagrangian: ');
+%         disp(num2str(La0));
+        disp('Displacement constraint: ');
         disp(num2str(c_u));
+        disp('Stress constraint: ');
         disp(num2str(c_sig));
+        % Step length
         if iter == 0
             tau = norm(s0)/norm(dLa);
         else
@@ -33,20 +44,22 @@ function solveAugLagr
             else
 %                 La0 = La;
                 tau = tau/2;
-                if tau < 1e-20
+                if tau < 1e-8
                     rightStepLength = 1;
                 end
             end
         end
+        % Calculate Augmented Lagrangian and constraints
         l_u0   = l_u;
         l_sig0 = l_sig;
         l_u    = l_u0 + rho_u*max(-l_u0/rho_u,c_u);
         l_sig  = l_sig0 + rho_sig*max(-l_sig0/rho_sig,c_sig);
         [c,c_u,c_sig,La] = computeParameters(s,l_u,l_sig,rho_u,rho_sig);
         [~,~,~,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig);
-        dS = norm(s-s0)/norm(s0);
-        s0 = s;
+        dS  = norm(s-s0)/norm(s0);
+        s0  = s;
         La0 = La;
+        iter   = iter + 1;
     end
 end
 
