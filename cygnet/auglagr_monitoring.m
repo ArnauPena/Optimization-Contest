@@ -1,6 +1,7 @@
 function auglagr_monitoring(monitor, iter, sections, objective, ...
-    stressvio, dispvio, totalvio, lagrU, lagrS, tau, w0)
+    stressvio, dispvio, lagrU, lagrS, tau, w0)
 
+    totalvio = stresvio + dispvio;
     createObjectiveGraph(iter,objective, w0);
     createSectionDistributionGraph(sections);
     createVioGraph(iter, stressvio, dispvio);
