@@ -1,7 +1,7 @@
 function auglagr_monitoring(monitor, iter, sections, objective, ...
     stressvio, dispvio, lagrU, lagrS, tau, w0)
 
-    totalvio = stresvio + dispvio;
+    totalvio = stressvio + dispvio;
     createObjectiveGraph(iter,objective, w0);
     createSectionDistributionGraph(sections);
     createVioGraph(iter, stressvio, dispvio);
@@ -13,14 +13,16 @@ end
 
 function createObjectiveGraph(iter,objective, w0)
     subplot(2,3,1)
+    hold on
     plot(iter,objective, 'Color', '#0072BD')
     w0plot = w0*ones(length(iter));
     plot(iter,w0plot,'--','Color', '#D95319')
     title('Objective function');
+    hold off
 end
 
 function createSectionDistributionGraph(sections)
-    subplot(2,2,2)
+    subplot(2,3,2)
     bar(sections);
     ylim([1 37]);
     title('Bar sections');
@@ -28,16 +30,15 @@ end
 
 function createLagrangianGraph(iter, lagrU, lagrS)
     subplot(2,3,3)
-    plot(iter,lagrU,'Color', '#0072BD')
+    plot(iter,lagrS,'Color', '#0072BD')
     hold on
-    plot(iter,lagrS,'Color', '#D95319')
+    plot(iter,lagrU,'Color', '#D95319')
     title('Lagrangian multipliers');
     legend('stress', 'disp')
 end
 
 function createVioGraph(iter, stressvio, dispvio)
     subplot(2,3,4)
-    plot(iter,stressvio,'Color', '#0072BD')
     hold on
     plot(iter,stressvio,'Color', '#0072BD')
     plot(iter,dispvio,'Color', '#D95319')
