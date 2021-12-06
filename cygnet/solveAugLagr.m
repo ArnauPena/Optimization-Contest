@@ -112,6 +112,7 @@ function gradA = computeSectionGradient(s,sec)
     gradA    = - Amin * p * s.^(p-1) + Amax * p*s.^(p-1);
 end
 
+
 function [l_u, l_sig] = updateMultipliers(l_u, l_sig, rho_u, rho_sig, c_u, c_sig)
     l_u0   = l_u;
     l_sig0 = l_sig;
@@ -130,3 +131,18 @@ function [cost, const_u, const_sig, lu, lsig, tauV] = computeMonitoring(c, c_u, 
         x                 = calculateSectionID(s);
         auglagr_monitoring(monitor, 1:(iter+1), x, cost, const_sig, const_u, lu, lsig ,tauV, w0);
 end
+
+function [dC, dV1, dV2] = calculateFiniteGradient(s)
+    x0 = calculateSectionID(s);
+    [c0, v10, v20] = ISCSO_2021(x0,0);
+    for i = 1:numel(s)
+        s(i) = s(i)+1/37;
+        x = calculateSectionID(s);
+        [c, v1, v2] = ISCSO_2021(x,0);
+        ds = 1/37;
+        dC(i)  = (c-c0) / (ds);
+        dV1(i) = (v1-v10) / (ds);
+        dV2(i) = (v2-v20) / (ds);
+    end
+end
+
