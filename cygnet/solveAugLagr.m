@@ -153,6 +153,7 @@ function [dC, dV1, dV2] = calculateFiniteGradient(s)
         dC(i)  = (c-c0) / (ds);
         dV1(i) = (v1-v10) / (ds);
         dV2(i) = (v2-v20) / (ds);
+        s(i) = s(i)-1/37;
     end
 end
 
