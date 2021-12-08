@@ -1,8 +1,20 @@
-%% Augmented Langrangian method %%
+
+function solveOptimizationProblem
+%     algorithm = 'Alternate directions';
+    algorithm = 'Augmented Lagrangian';
+    switch algorithm
+        case 'Augmented Lagrangian'
+            solveAugLagr;
+        case 'Alternate directions'
+            solveAlternDir;
+        otherwise
+            error('Algorithm not implemented')
+    end
+end
 
 function solveAugLagr
     [sec]   = computeSectionData;
-    method = 'finite diferences';
+    method = 'approach';
     run("auglagrData.m");
     [w,~,~] = ISCSO_2021(x0,0);
     w0      = w;
@@ -22,12 +34,29 @@ function solveAugLagr
         [~,~,~,dLa]           = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig,method);
         [cost, const_u, const_sig, lu, lsig, tauV] = computeMonitoring(c,c_u,c_sig,l_u,l_sig,tau,w0,iter,s,...
             cost, const_u, const_sig, lu, lsig, tauV, monitor);
-        cost_gradient = (c - wNew)/dS;
         wNew          = c;
         dS            = norm(s-s0)/norm(s0);
         s0            = s;
         LaNew         = LaTrial;
         iter          = iter + 1;
+    end
+end
+
+function solveAlternDir
+    [sec]   = computeSectionData;
+    method  = 'approach';
+    run("alternDirData.m");
+    [c,c_sig,c_u] = ISCSO_2021(x0,0);
+    s    = s0;
+    w0   = c;
+    iter = 0;
+    while dS > tol || c_u > 0 || c_sig > 0
+        displayInfo(iter,c,c_u,c_sig);
+        [tau1, s, dc] = computeStepOne(s,sec,w0,method);
+        [tau2,s,dc_u,dc_sig] = computeStepTwo(s,sec,method);
+        [c,c_sig,c_u] = ISCSO_2021(s,0);
+        w0 = s;
+        iter = iter+1;
     end
 end
 
@@ -80,6 +109,11 @@ function [c,c_u,c_sig,La] = computeParameters(s,l_u,l_sig,rho_u,rho_sig)
 end
 
 function [dc,dc_u,dc_sig,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,rho_sig,c_u,c_sig,method)
+    [dc,dc_u,dc_sig] = computeGradient(s,sec,method);
+    dLa    = dc + (l_u + rho_u*c_u).*dc_u + (l_sig + rho_sig*c_sig).*dc_sig;
+end
+
+function [dc,dc_u,dc_sig] = computeGradient(s,sec,method)
     switch method
         case 'approach'
             dA     = computeSectionGradient(s,sec);
@@ -87,12 +121,54 @@ function [dc,dc_u,dc_sig,dLa] = computeParametersGradient(s,sec,l_u,l_sig,rho_u,
             dc     = dA;
             dc_u   = -dA./A.^2;
             dc_sig = -dA./A.^2;
-        case 'finite diferences'
+        case 'finite differences'
             [dc, dc_sig, dc_u] = calculateFiniteGradient(s);
         otherwise
             error('Method not implemented')
     end
-    dLa    = dc + (l_u + rho_u*c_u).*dc_u + (l_sig + rho_sig*c_sig).*dc_sig;
+end
+
+function [tau1, s, dc] = computeStepOne(s,sec,w0,method)
+    stepRight = 0;
+    tau1 = norm(s)/norm(w0);
+    while stepRight == 0
+        [dc,dc_u,dc_sig] = computeGradient(s,sec,method);
+        smean = s - tau1*dc;
+        s     = max(0,min(1,smean));
+        x = calculateSectionID(s);
+        [c,~,~] = ISCSO_2021(x,0);
+        if c < w0
+            stepRight = 1;
+        else
+            tau1 = tau1/2;
+        end
+        if tau1 < 1e-8
+            stepRight = 1;
+        end
+    end
+end
+
+function [tau2,s,dc_u,dc_sig] = computeStepTwo(s,sec,method)
+    stepRight = 0;
+    [dc,dc_u,dc_sig] = computeGradient(s,sec,method);
+    tau2 = norm(s)/norm(dc_u);
+    while stepRight == 0
+        [dc,dc_u,dc_sig] = computeGradient(s,sec,method);
+        smean1 = s - tau2*dc_u;
+        smean2 = s - tau2*dc_sig;
+        smean  = max(smean1,smean2);
+        s      = max(0,min(1,smean));
+        x = calculateSectionID(s);
+        [~,c_sig,c_u] = ISCSO_2021(x,0);
+        if c_u == 0 && c_sig == 0
+            stepRight = 1;
+        else
+            tau2 = tau2/2;
+        end
+        if tau2 < 1e-8
+            stepRight = 1;
+        end
+    end
 end
 
 function [Si] = computeData()
@@ -147,9 +223,7 @@ function [dC, dV1, dV2] = calculateFiniteGradient(s)
     [c0, v10, v20] = ISCSO_2021(x0,0);
     for i = 1:numel(s)
         s(i) = s(i)+1/37;
-        if s(i) > 1
-            s(i) = 1;
-        end
+        s    = max(0,min(1,s));
         x = calculateSectionID(s);
         [c, v1, v2] = ISCSO_2021(x,0);
         ds = 1/37;

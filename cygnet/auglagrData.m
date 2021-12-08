@@ -2,8 +2,8 @@
 tol       = 1e-3;
 l_u       = 0;
 l_sig     = 0;
-rho_u     = 1000;
-rho_sig   = 1000;
+rho_u     = 100;
+rho_sig   = 100;
 s0        = 0.8*ones(1,345);
 % s0        = rand(1,345);
 x0        = s0*(37-1) + 1;
