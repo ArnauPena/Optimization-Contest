@@ -7,6 +7,10 @@ function solveProblem()
     historial.fval = [];
     historial.x = [];
     searchdir = [];
+    dc = [];
+    dc_sig = [];
+    dc_u = [];
+
     
     n    = 345;
     s0 = 0.99*ones(1,345);
@@ -134,6 +138,29 @@ function [dc, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,s0,sec)
     dc     = dc.*dA;
     dc_u   = dc_u.*dA./A.^2;
     dc_sig = dc_sig.*dA./A.^2;
+end
+
+function [dC, dV1, dV2] = calculateFiniteGradient(s)
+    x0 = calculateSectionID(s);
+    [c0, v10, v20] = ISCSO_2021(x0,0);
+    for i = 1:numel(s)
+        s(i) = s(i)+1/37;
+        if s(i) > 1
+            s(i) = 1;
+        end
+        x = calculateSectionID(s);
+        [c, v1, v2] = ISCSO_2021(x,0);
+        ds = 1/37;
+        dC(i)  = (c-c0) / (ds);
+        dV1(i) = -(v1-v10) / (ds); % provant amb negatiu
+        dV2(i) = (v2-v20) / (ds);
+        s(i) = s(i) - ds;
+    end
+end
+
+function x = calculateSectionID(s)
+    x = s*(37-1) + 1;
+    x = round(x);
 end
 
 end
