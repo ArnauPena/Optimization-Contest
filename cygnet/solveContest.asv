@@ -7,9 +7,14 @@ function solveProblem()
     historial.fval = [];
     historial.x = [];
     searchdir = [];
+    dc = [];
+    dc_sig = [];
+    dc_u = [];
     
+    s0 = 0.2*ones(1,345)
+    [dc, dc_sig, dc_u] = calculateFiniteGradient(s0)
+
     n    = 345;
-    s0 = 0.99*ones(1,345);
     sec = computeSectionData();
     myOptions = optimoptions(@fmincon,...
                 'OutputFcn',@outfun, ...
@@ -17,16 +22,16 @@ function solveProblem()
                 'SpecifyConstraintGradient', true, ...
                 'SpecifyObjectiveGradient', true, ...
                 'Display','iter','PlotFcns', @optimplotfval);
-    p.lb = 0*ones(1,n);
-    p.ub = 1*ones(1,n);
-    p.nonlcon = @(x) constraint(x, s0,sec);
-    p.objective = @(x) cost(x, s0,sec);
-    p.options = myOptions;
-    p.solver = 'fmincon';
-    p.x0 = s0;
-    x = fmincon(p);
-    p.objective(x)
-    p.nonlcon(x)
+    pr.lb = 0*ones(1,n);
+    pr.ub = 1*ones(1,n);
+    pr.nonlcon = @(x) constraint(x, sec);
+    pr.objective = @(x) cost(x, sec);
+    pr.options = myOptions;
+    pr.solver = 'fmincon';
+    pr.x0 = 0.2*ones(1,345);
+    x = fmincon(pr);
+    pr.objective(x)
+    pr.nonlcon(x)
 
     function stop = outfun(x,optimValues,state)
          stop = false;
@@ -91,17 +96,17 @@ function gradA = computeSectionGradient(s,sec)
     gradA    = - Amin * p * s.^(p-1) + Amax * p*s.^(p-1);
 end
 
-function [c, dC] = cost(s,s0,sec)
+function [c, dC] = cost(s,sec)
     x = s*(37-1) + 1;
     x = round(x);
     [w,v1,v2] = ISCSO_2021(x,0);
     c = w;
 %     dA = computeSectionGradient(s);
-    [dC, ~, ~] = computeFiniteDiffDerivatives(s,s0,sec);
+    [dC, ~, ~] = computeFiniteDiffDerivatives(s,sec);
 %     dC = dA;
 end
 
-function [c,ceq,dC,dceq] = constraint(s,s0,sec)
+function [c,ceq,dC,dceq] = constraint(s,sec)
 %[c,ceq,DC,DCeq]
     x = s*(37-1) + 1;
     x = round(x);
@@ -117,18 +122,25 @@ function [c,ceq,dC,dceq] = constraint(s,s0,sec)
 end
 
 function [dc, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,sec)
-    if (mod(historial.iter,10) == 0)
+    if (isfield(historial, 'iter') && historial.iter ~= 0 && mod(historial.iter,10) == 0)
+        disp(historial.iter)
+        disp('boop')
         [dc, dc_sig, dc_u] = calculateFiniteGradient(s);
         s0 = s;
-        save("dC.mat", "dc");
-        save("dSig.mat", 'dc_sig');
-        save("dU.mat", 'dc_u');
+        save('dc', "dc");
+        save('dc_sig', 'dc_sig');
+        save('dc_u', 'dc_u');
         save('s0', 's0');
     else
-        s0     = load('s0', 's0')
-        dc     = load("dC.mat", "dC");
-        dc_sig = load("dSig.mat", 'dc_sig');
-        dc_u   = load("dU.mat", 'dc_u');
+        s0     = load('s0', 's0');
+        dc     = load('dc', 'dc');
+        dc_sig = load('dc_sig', 'dc_sig');
+        dc_u   = load('dc_u','dc_u');
+
+        s0 = s0.s0;
+        dc = dc.dc;
+        dc_sig = dc_sig.dc_sig;
+        dc_u = dc_u.dc_u;
     end
 
     A      = computeSection(s,sec);
@@ -138,14 +150,16 @@ function [dc, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,sec)
     A = A./A0;
     dA = dA./dA0;
 
-    dc = dc.dC;
-    dc_sig = dc_sig.dV1;
-    dc_u = dc_u.dV2;
-    dc     = dc.*dA;
+    dc     = -dc.*dA;
     dc_u   = dc_u.*dA./A.^2;
     dc_sig = dc_sig.*dA./A.^2;
 end
 
+end
+
+function x = calculateSectionID(s)
+    x = s*(37-1) + 1;
+    x = round(x);
 end
 
 function [dC, dV1, dV2] = calculateFiniteGradient(s)
