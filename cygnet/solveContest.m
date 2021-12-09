@@ -7,12 +7,13 @@ function solveProblem()
     historial.fval = [];
     historial.x = [];
     searchdir = [];
+    preiter = [];
     dc = [];
     dc_sig = [];
     dc_u = [];
     
-    s0 = 0.2*ones(1,345)
-    [dc, dc_sig, dc_u] = calculateFiniteGradient(s0)
+%     s0 = 0.2*ones(1,345)
+%     [dc, dc_sig, dc_u] = calculateFiniteGradient(s0)
 
     n    = 345;
     sec = computeSectionData();
@@ -122,7 +123,9 @@ function [c,ceq,dC,dceq] = constraint(s,sec)
 end
 
 function [dc, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,sec)
-    if (isfield(historial, 'iter') && historial.iter ~= 0 && mod(historial.iter,10) == 0)
+    preiter = 0;
+    if (isfield(historial, 'iter') && historial.iter ~= 0 && ...
+            historial.iter ~= preiter && mod(historial.iter,10) == 0)
         disp(historial.iter)
         disp('boop')
         [dc, dc_sig, dc_u] = calculateFiniteGradient(s);
@@ -131,6 +134,7 @@ function [dc, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,sec)
         save('dc_sig', 'dc_sig');
         save('dc_u', 'dc_u');
         save('s0', 's0');
+        preiter = historial.iter;
     else
         s0     = load('s0', 's0');
         dc     = load('dc', 'dc');
