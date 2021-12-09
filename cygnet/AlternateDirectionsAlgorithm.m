@@ -11,21 +11,25 @@ classdef AlternateDirectionsAlgorithm < handle
 
             monitor = AlternateDirectionsMonitor();
             s0        = 0.1*ones(1,345);
-            % s0        = rand(1,345);
+            s0        = rand(1,345);
 
             method = 'finite differences';
             update = 1;
             sec    = obj.computeSectionData();
-%             [dc,dc_u,dc_sig] = obj.computeParametersGradient(s0,sec,method,update);
+            [dc,dc_u,dc_sig] = obj.computeParametersGradient(s0,sec,method,update);
 
-            dc = load('dc.mat', 'dc').dc;
-            dc_u = load('dc_uAltDir.mat', 'dc_u').dc_u;
-            dc_sig = load('dc_sigAltDir.mat', 'dc_sig').dc_sig;
+%             dc = load('dc.mat', 'dc').dc;
+%             dc_u = load('dc_uAltDir.mat', 'dc_u').dc_u;
+%             dc_sig = load('dc_sigAltDir.mat', 'dc_sig').dc_sig;
 
             [c,c_u,c_sig] = obj.computeParameters(s0);
             iter = 1;
             s = s0;
-            while iter < 400
+            RECORD_C = 1000000;
+            RECORD_S = [];
+            DCGLOBAL = [];
+
+            while iter < 1000
                 if (iter == 1 || mod(iter,10) == 0)
                     update = 1;
                     disp(iter)
@@ -43,8 +47,14 @@ classdef AlternateDirectionsAlgorithm < handle
                     update = 1;
                     iter = iter + 1;
                 end
-                
+
+                if (c<RECORD_C && c_u == 0 && c_sig == 0)
+                    RECORD_C = c;
+                    RECORD_S = s;
+                end
+
                 [dc,~,~] = obj.computeParametersGradient(s,sec,method,0);
+                DCGLOBAL(:,iter) = dc;
                 s = obj.makeCostDecrease(s, c, dc);
                 [c,c_u,c_sig] = obj.computeParameters(s);
                 objective(iter) = c;
@@ -54,7 +64,12 @@ classdef AlternateDirectionsAlgorithm < handle
                 iterations = 1:1:length(objective);
                 monitor.update(iterations, sections, objective, stressvio, dispvio)
                 iter = iter + 1;
+                if (c<RECORD_C && c_u == 0 && c_sig == 0)
+                    RECORD_C = c;
+                    RECORD_S = s;
+                end
             end
+            DCGLOBAL;
         end
 
     end
