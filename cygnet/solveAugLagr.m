@@ -39,6 +39,10 @@ close all
         cNew          = c;
         LaNew         = LaTrial;
         iter          = iter + 1;
+%         if iter == 39
+%             x = calculateSectionID(s);
+%             save millorSolucio x
+%         end
     end
 end
 
@@ -56,7 +60,7 @@ end
 function [tau, c_u, c_sig, s] = determineStepLength(s0, l_u,l_sig,rho_u,rho_sig,tau,LaNew,dLa,cNew)
 %         if tau < 1e-8
 %             tau = 0.05*norm(s0)/norm(dLa);
-            tau = 1/max(abs(dLa))*4/37;
+            tau = 1/mean(abs(dLa))*1/37;
 %         else
 %             tau = 10*tau;
 %         end
@@ -188,30 +192,30 @@ function [dC, dV1, dV2] = calculateFiniteGradient(s)
     x0 = calculateSectionID(s);
     [c0, v10, v20] = ISCSO_2021(x0,0);
     for i = 1:numel(s)
-        s1    = s;
-        s2    = s;
-        s1(i) = s(i)+1/37;
-        s2(i) = s(i)-1/37;
+        su    = s;
+        sl    = s;
+        su(i) = s(i)+1/37;
+        sl(i) = s(i)-1/37;
 
-        if s1(i) > 1
-            s1(i) = 1;
-        elseif s2(i) < 0
-            s2(i) = 0;
+        if su(i) > 1
+            su(i) = 1;
+        elseif sl(i) < 0
+            sl(i) = 0;
         end
-            x1 = calculateSectionID(s1);
-            x2 = calculateSectionID(s2);
-            [c1, v1_1, v2_1] = ISCSO_2021(x1,0);
-            [c2, v1_2, v2_2] = ISCSO_2021(x1,0);
+            x1 = calculateSectionID(su);
+            x2 = calculateSectionID(sl);
+            [cu, v1_u, v2_u] = ISCSO_2021(x1,0);
+            [cl, v1_l, v2_l] = ISCSO_2021(x2,0);
             ds = 1/37;
-            dC1(i)   = (c1-c0) / (ds);
-            dV1_1(i) = (v1_1-v10) / (ds);
-            dV2_1(i) = (v2_1-v20) / (ds);
-            dC2(i)   = (c2-c0) / (ds);
-            dV1_2(i) = (v1_2-v10) / (ds);
-            dV2_2(i) = (v2_2-v20) / (ds);
-            dC(i)    = (dC1(i) + dC2(i)) / 2;
-            dV1(i)   = (dV1_1(i) + dV1_2(i)) / 2;
-            dV2(i)   = (dV2_1(i) + dV2_2(i)) / 2;
+            dCu(i)   = (cu-c0) / (ds);
+            dV1_u(i) = (v1_u-v10) / (ds);
+            dV2_u(i) = (v2_u-v20) / (ds);
+            dCl(i)   = (c0-cl) / (ds);
+            dV1_l(i) = (v10-v1_l) / (ds);
+            dV2_l(i) = (v20-v2_l) / (ds);
+            dC(i)    = (dCu(i) + dCl(i)) / 2;
+            dV1(i)   = (dV1_u(i) + dV1_l(i)) / 2;
+            dV2(i)   = (dV2_u(i) + dV2_l(i)) / 2;
     end
 end
 
