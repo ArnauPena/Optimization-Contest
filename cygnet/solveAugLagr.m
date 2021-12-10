@@ -60,7 +60,7 @@ end
 function [tau, c_u, c_sig, s] = determineStepLength(s0, l_u,l_sig,rho_u,rho_sig,tau,LaNew,dLa,cNew)
 %         if tau < 1e-8
 %             tau = 0.05*norm(s0)/norm(dLa);
-            tau = 1/mean(abs(dLa))*1/37;
+            tau = 1/mean(abs(dLa))*4/37;
 %         else
 %             tau = 10*tau;
 %         end
