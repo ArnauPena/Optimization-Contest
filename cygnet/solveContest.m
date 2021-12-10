@@ -15,6 +15,16 @@ function solveProblem()
 %     s0 = 0.2*ones(1,345)
 %     [dc, dc_sig, dc_u] = calculateFiniteGradient(s0)
 
+    dc = load('dcper02.mat','dc').dc;
+    dc_sig = load('dc_sigper02.mat','dc_sig').dc_sig;
+    dc_u = load('dc_uper02.mat','dc_u').dc_u;
+    s0 = load('s0per02.mat','s0').s0;
+    save('dc', "dc");
+    save('dc_sig', 'dc_sig');
+    save('dc_u', 'dc_u');
+    save('s0', 's0');
+    
+
     n    = 345;
     sec = computeSectionData();
     myOptions = optimoptions(@fmincon,...
