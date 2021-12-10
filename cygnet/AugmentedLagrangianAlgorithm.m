@@ -46,7 +46,9 @@ classdef AugmentedLagrangianAlgorithm
     methods (Access = private)
 
         function [tau, c_u, c_sig, s] = determineStepLength(obj,s0, l_u,l_sig,rho_u,rho_sig,tau,LaNew,dLa,cNew)
-            tau = 1/mean(abs(dLa))*1/37;
+            tau1 = 1/mean(abs(dLa))*1/37;
+            tau2 = 1/max(abs(dLa))*2/37;
+            tau  = max(tau1,tau2);
             rightStepLength = 0;
             while rightStepLength == 0
                 smean = s0 - tau*dLa;
