@@ -1,9 +1,9 @@
 %% Augmented Lagrange Data %%
-tol       = 1e-3;
+tol       = 1e-15;
 l_u       = 0;
 l_sig     = 0;
-rho_u     = 0.1;
-rho_sig   = 0.1;
+rho_u     = 10;
+rho_sig   = 10;
 s0        = 0.6*ones(1,345);
 % s0        = rand(1,345);
 x0        = s0*(37-1) + 1;
