@@ -3,19 +3,32 @@ classdef NullSpaceOptimizer < handle
     properties(Access = public)
         bestSolution
         functionEvaluations
+        nIter
     end
 
     properties(Access = private)
-        s
-        information
+        designVariable
+        dualVariable
+        data
         cost
         constraint
+        hasConverged
+        mOld
+        meritNew
+        acceptableStep
+        lineSearchTrials
+        meritGradient
+        tol = 1e-8;
+        monitor
+        fEval
+        stepLength
     end
 
     methods(Access = public)
 
         function obj = NullSpaceOptimizer()
             obj.init();
+            obj.monitor = NullSpaceMonitor();
             obj.solve();
         end
 
@@ -24,59 +37,161 @@ classdef NullSpaceOptimizer < handle
     methods (Access = private)
 
         function init(obj)
-            obj.functionEvaluations   = 0;
-            info.numOfDesignVariables = 345;
-            info.numOfSections        = 37;
-            info.density              = 7.85;
-            info.sections             = load("sectionsValue","Si").Si;
-            info.barsLength           = obj.computeBarsLength(info);
-            info.costGradient         = @(x) obj.computeCostGradient(x);
-            info.lengthLessCostGradient = obj.computeLengthLessCostGradient(info);
-            obj.information           = info;
+            obj.data           = PreProcess;
+            obj.designVariable = 0.1*ones(1,345);
+            obj.dualVariable   = zeros(2,1);
+            obj.nIter          = 0;
         end
-            
-        function l = computeBarsLength(obj,info)
-            n         = info.numOfDesignVariables;
-            sections0 = ones(1,n);
-            l         = zeros(1,n);
-            [f0,~,~]  = obj.computeCostAndConstraints(sections0);
-            for i = 1:n
-                sections1      = sections0;
-                sections1(1,i) = 2;
-                [f1,~,~]       = obj.computeCostAndConstraints(sections1);
-                l(i)           = obj.computeLength(f0,f1,info);
+
+        function solve(obj)
+            obj.hasConverged = false;
+            while ~obj.hasConverged
+                obj.update();
+                obj.increaseIter();
+                obj.updateMonitoring();
+                obj.checkConvergence();
             end
         end
 
-        function [f,c1,c2] = computeCostAndConstraints(obj,x)
-            [f,c1,c2] = ISCSO_2021(x,0);
-            obj.functionEvaluations = obj.functionEvaluations + 1;
+        function update(obj)
+            x0 = obj.designVariable;
+            obj.mOld = obj.computeMeritFunction(x0);
+            if obj.nIter == 0
+                obj.calculateInitialStep();
+            end
+            obj.acceptableStep   = false;
+            obj.lineSearchTrials = 0;
+            DJ = obj.cost.gradient;
+            Dg = obj.constraint.gradient;
+            while ~obj.acceptableStep
+                obj.computeMeritGradient(DJ,Dg);
+                x = obj.data.updatePrimal(x0,obj.meritGradient');
+                obj.computeFunctionAndGradient(x);
+                obj.updateDual();
+                obj.checkStep(x);
+            end
+            obj.updateOldValues(x);
         end
 
-        function g = computeCostGradient(obj,x)
-            info     = obj.information;
-            l        = info.barsLength;
-            gL       = info.lengthLessCostGradient;
-            x        = contToDiscrete(x);
-            g        = zeros(1,length(x));
-            intenger = fix(x);
-            incr     = x - intenger;
-            for i = 1:length(x)
-                c1   = gL(intenger(i));
-                c2   = gL(intenger(i) + 1);
-                g(i) = (c1*(1-incr) + c2*incr)*l(i);
+        function checkStep(obj,x)
+            mNew = obj.computeMeritFunction(x);
+            if obj.nIter == 0
+                obj.acceptableStep = true;
+                obj.meritNew       = mNew;
             end
+            if mNew < obj.mOld
+                obj.acceptableStep = true;
+                obj.meritNew = mNew;
+                factor = 1.2;
+                obj.data.increaseStepLength(factor);
+            elseif obj.data.stepLengthIsTooSmall()
+                error('Convergence could not be achieved (step length too small)')
+            else
+                obj.data.decreaseStepLength();
+                obj.lineSearchTrials = obj.lineSearchTrials + 1;
+            end
+        end
+
+        function updateMonitoring(obj)
+            it   = obj.nIter;
+            iter = 0:it;
+            obj.constraint.vect(it+1,:) = obj.constraint.value;
+            obj.cost.vect(it+1)         = obj.cost.value;
+            obj.fEval(it+1)             = obj.data.functionEvaluations;
+            obj.stepLength(it+1)        = obj.data.stepLength;
+            s    = obj.data.contToDiscrete(obj.designVariable);
+            obj.monitor.update(iter,s,obj.cost.vect,obj.constraint.vect,...
+                obj.stepLength,obj.fEval)
+        end
+
+        function updateOldValues(obj,x)
+            obj.designVariable = x;
+        end
+
+        function obj = checkConvergence(obj)
+            if abs(obj.meritNew - obj.mOld) < obj.tol && obj.checkConstraint()
+                obj.hasConverged = true;
+            else
+
+            end
+
+        end
+
+        function isZero = checkConstraint(obj)
+            c      = obj.constraint.value;
+            isZero = 0 == norm(c,2);
+        end
+
+        function calculateInitialStep(obj)
+            x       = obj.designVariable;
+            obj.computeGradient(x);
+            l       = obj.dualVariable;
+            DJ      = obj.cost.gradient';
+            Dg      = obj.constraint.gradient;
+            aJ      = 1;
+            DmF     = aJ*(DJ + Dg*l);
+            factor  = 1e-3;
+            obj.data.computeFirstStepLength(DmF,x,factor);
+        end
+
+        function computeMeritGradient(obj,DJ,Dg)
+            l       = obj.dualVariable;
+            aJ      = 1;
+            DmF     = aJ*(DJ' + Dg*l);
+            obj.meritGradient = DmF;
+        end
+
+        function mF = computeMeritFunction(obj,x)
+            obj.computeFunction(x);
+            J  = obj.cost.value;
+            h  = obj.constraint.value;
+            l  = obj.dualVariable;
+            aJ = 1;
+            AJ = aJ*(J + l'*h);
+            mF = AJ;
+        end
+
+        function computeFunctionAndGradient(obj,x)
+            obj.computeFunction(x);
+            obj.computeGradient(x);
+        end
+
+        function computeFunction(obj,x)
+            x                       = obj.data.contToDiscrete(x);
+            x                       = round(x);
+            [f,c1,c2]               = obj.data.computeCostAndConstraints(x);
+            obj.cost.value          = f;
+            obj.constraint.value    = [c1,c2]';
+        end
+
+        function computeGradient(obj,x)
+            obj.cost.gradient       = obj.data.computeCostGradient(x);
+            if ~mod(obj.nIter,5)
+                obj.constraint.gradient = obj.data.computeConstraintGradient(x);
+            end
+        end
+
+        function updateDual(obj)
+            DJ = obj.cost.gradient';
+            Dh = obj.constraint.gradient;
+            h  = obj.constraint.value;
+            S  = (Dh'*Dh)^-1;
+            aJ = 1;
+            aC = 1;
+            f2 = 1;
+            AC = f2*aC/aJ*S*h;
+            AJ = -aC/aJ*S*Dh'*DJ;
+            l  = AC + AJ;
+            obj.dualVariable = l;
+        end
+
+        function increaseIter(obj)
+            obj.nIter = obj.nIter + 1;
         end
 
     end
 
     methods (Static, Access = private)
-
-        function l = computeLength(f0,f1,info)
-            Si  = info.sections;
-            rho = info.density;
-            l   = (f1 - f0)/((Si(2) - Si(1))*rho);
-        end
 
         function x = contToDiscrete(x)
             x = x*36 + 1;
@@ -87,17 +202,5 @@ classdef NullSpaceOptimizer < handle
             x = x*1/36 - 1/36;
         end
 
-        function g = computeLengthLessCostGradient(info)
-            Si     = info.sections;
-            rho    = info.density;
-            g      = zeros(1,length(Si));
-            g(1)   = rho*(Si(2) - Si(1));
-            g(end) = rho*(Si(end) - Si(end-1));
-            for i = 2:length(Si)-1
-                g(i) = 0.5*rho*(Si(i+1) - Si(i-1));
-            end
-        end
-
     end
-
 end
