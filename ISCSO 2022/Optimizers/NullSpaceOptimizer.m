@@ -22,13 +22,14 @@ classdef NullSpaceOptimizer < handle
         monitor
         fEval
         stepLength
+        dualVarVect
     end
 
     methods(Access = public)
 
         function obj = NullSpaceOptimizer()
             obj.init();
-            obj.monitor = NullSpaceMonitor();
+            obj.monitor = OptimizerMonitor();
             obj.solve();
         end
 
@@ -94,14 +95,15 @@ classdef NullSpaceOptimizer < handle
 
         function updateMonitoring(obj)
             it   = obj.nIter;
-            iter = 0:it;
-            obj.constraint.vect(it+1,:) = obj.constraint.value;
-            obj.cost.vect(it+1)         = obj.cost.value;
-            obj.fEval(it+1)             = obj.data.functionEvaluations;
-            obj.stepLength(it+1)        = obj.data.stepLength;
+            iter = 1:it;
+            obj.constraint.vect(it,:) = obj.constraint.value;
+            obj.cost.vect(it)         = obj.cost.value;
+            obj.fEval(it)             = obj.data.functionEvaluations;
+            obj.stepLength(it)        = obj.data.stepLength;
+            obj.dualVarVect(it,:)     = obj.dualVariable';
             s    = obj.data.contToDiscrete(obj.designVariable);
             obj.monitor.update(iter,s,obj.cost.vect,obj.constraint.vect,...
-                obj.stepLength,obj.fEval)
+                obj.stepLength,obj.fEval,obj.dualVarVect)
         end
 
         function updateOldValues(obj,x)
