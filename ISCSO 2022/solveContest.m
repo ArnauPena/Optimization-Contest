@@ -1,0 +1,195 @@
+function solveContest
+%     plotHomogeneousSolution();
+    solveProblem();
+end
+
+function solveProblem()
+    historial.fval = [];
+    historial.x = [];
+    searchdir = [];
+    preiter = [];
+    dc = [];
+    dc_sig = [];
+    dc_u = [];
+    
+%     s0 = 0.2*ones(1,345)
+%     [dc, dc_sig, dc_u] = calculateFiniteGradient(s0)
+
+    dc = load('dcper02.mat','dc').dc;
+    dc_sig = load('dc_sigper02.mat','dc_sig').dc_sig;
+    dc_u = load('dc_uper02.mat','dc_u').dc_u;
+    s0 = load('s0per02.mat','s0').s0;
+    save('dc', "dc");
+    save('dc_sig', 'dc_sig');
+    save('dc_u', 'dc_u');
+    save('s0', 's0');
+    
+
+    n    = 345;
+    sec = computeSectionData();
+    myOptions = optimoptions(@fmincon,...
+                'OutputFcn',@outfun, ...
+                'algorithm', 'active-set', ... 
+                'SpecifyConstraintGradient', true, ...
+                'SpecifyObjectiveGradient', true, ...
+                'Display','iter','PlotFcns', @optimplotfval);
+    pr.lb = 0*ones(1,n);
+    pr.ub = 1*ones(1,n);
+    pr.nonlcon = @(x) constraint(x, sec);
+    pr.objective = @(x) cost(x, sec);
+    pr.options = myOptions;
+    pr.solver = 'fmincon';
+    pr.x0 = 0.2*ones(1,345);
+    x = fmincon(pr);
+    pr.objective(x)
+    pr.nonlcon(x)
+
+    function stop = outfun(x,optimValues,state)
+         stop = false;
+        
+         switch state
+             case 'init'
+                 hold on
+             case 'iter'
+             % Concatenate current point and objective function
+             % value with historial. x must be a row vector.
+               historial.fval = [historial.fval; optimValues.fval];
+               historial.x = [historial.x; x];
+             % Concatenate current search direction with 
+             % searchdir.
+               searchdir = [searchdir;... 
+                            optimValues.searchdirection'];
+               historial.iter = optimValues.iteration;
+             case 'done'
+                 hold off
+             otherwise
+         end
+    end
+
+
+function plotHomogeneousSolution()
+    sects = 1:37;
+    for i = sects
+        x0 = i*ones(1,345);
+        [w(i), v1(i), v2(i)] = ISCSO_2021(x0,0);
+    end
+    figure();
+    plot (sects, w);
+    figure();
+    plot (sects, [v1; v2]);
+end
+
+function [Si] = computeData()
+    Si = []
+    eval("DataSections")
+end
+
+function [sections] = computeSectionData()
+    Si = computeData();
+    sections = Si(:,1);
+end
+
+function A = computeSection(s,sec)
+    sections = sec;
+    Amax     = max(sections);
+    Amin     = min(sections)/Amax;
+    Amax     = 1;
+    p        = 3;
+    A        = Amin * (1-s.^p) + s.^p * Amax;
+end
+
+function gradA = computeSectionGradient(s,sec)
+    sections = sec;
+    Amax     = max(sections);
+    Amin     = min(sections)/Amax;
+    Amax     = 1;
+    p        = 3;
+    gradA    = - Amin * p * s.^(p-1) + Amax * p*s.^(p-1);
+end
+
+function [c, dC] = cost(s,sec)
+    x = s*(37-1) + 1;
+    x = round(x);
+    [w,v1,v2] = ISCSO_2021(x,0);
+    c = w;
+%     dA = computeSectionGradient(s);
+    [dC, ~, ~] = computeFiniteDiffDerivatives(s,sec);
+%     dC = dA;
+end
+
+function [c,ceq,dC,dceq] = constraint(s,sec)
+%[c,ceq,DC,DCeq]
+    x = s*(37-1) + 1;
+    x = round(x);
+    [w,v1,v2] = ISCSO_2021(x,0);
+    c = [v1,v2];
+    ceq = [];
+%     dA = computeSectionGradient(s);
+    [~, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,sec);
+    dC = [dc_u; dc_sig]';
+%     dC = [1./dA; 1./dA]';
+
+    dceq = [];
+end
+
+function [dc, dc_u, dc_sig] = computeFiniteDiffDerivatives(s,sec)
+    preiter = 0;
+    if (isfield(historial, 'iter') && historial.iter ~= 0 && ...
+            historial.iter ~= preiter && mod(historial.iter,10) == 0)
+        disp(historial.iter)
+        disp('boop')
+        [dc, dc_sig, dc_u] = calculateFiniteGradient(s);
+        s0 = s;
+        save('dc', "dc");
+        save('dc_sig', 'dc_sig');
+        save('dc_u', 'dc_u');
+        save('s0', 's0');
+        preiter = historial.iter;
+    else
+        s0     = load('s0', 's0');
+        dc     = load('dc', 'dc');
+        dc_sig = load('dc_sig', 'dc_sig');
+        dc_u   = load('dc_u','dc_u');
+
+        s0 = s0.s0;
+        dc = dc.dc;
+        dc_sig = dc_sig.dc_sig;
+        dc_u = dc_u.dc_u;
+    end
+
+    A      = computeSection(s,sec);
+    A0     = computeSection(s0,sec);
+    dA     = computeSectionGradient(s,sec);
+    dA0    = computeSectionGradient(s0,sec);
+    A = A./A0;
+    dA = dA./dA0;
+
+    dc     = dc.*dA;
+    dc_u   = dc_u.*dA./A.^2;
+    dc_sig = dc_sig.*dA./A.^2;
+end
+
+end
+
+function x = calculateSectionID(s)
+    x = s*(37-1) + 1;
+    x = round(x);
+end
+
+function [dC, dV1, dV2] = calculateFiniteGradient(s)
+    x0 = calculateSectionID(s);
+    [c0, v10, v20] = ISCSO_2021(x0,0);
+    for i = 1:numel(s)
+        s(i) = s(i)+1/37;
+        if s(i) > 1
+            s(i) = 1;
+        end
+        x = calculateSectionID(s);
+        [c, v1, v2] = ISCSO_2021(x,0);
+        ds = 1/37;
+        dC(i)  = (c-c0) / (ds);
+        dV1(i) = (v1-v10) / (ds);
+        dV2(i) = (v2-v20) / (ds);
+        s(i) = s(i) - ds;
+    end
+end
