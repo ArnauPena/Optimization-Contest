@@ -1,14 +1,21 @@
 %% Heuristic algorithm
 clc; clear; close all;
 
-nBars = 336;
+% Load known data
 Si = load('AvailableSections.mat','Si').Si;
 barLengths = load('BarLengths2022.mat','barLengths').barLengths;
+nBars = 336;
 
+% Parameters
+lambda = 1000;
+stepA = 3;
+
+
+% First iteration
 secs = 2*ones(1,nBars);
 [weightDefault, vioStressDefault, vioDispDefault] = ISCSO_2022(secs,0);
-[sensitivityStrs, sensitivityDisp] = calculateFullSensitivities(secs, vioStressDefault, vioDispDefault);
-[idx,col] = quinesBarresCanviem(vioStressDefault, vioDispDefault, sensitivityStrs, sensitivityDisp);
+
+% secs = min(37,max(1,secs));
 
 s = secs;
 comptador = 2;
@@ -21,176 +28,111 @@ h = figure();
 
 %% Fem creixer arees
 while true
-    [sensitivityStrs, sensitivityDisp] = calculateFullSensitivities(secs, vioStressDefault, vioDispDefault);
-%     [sensitivityStrs, sensitivityDisp] = calculateCertainSensitivities(secs, vioStressDefault, vioDispDefault,idx);
-    [idx,col] = quinesBarresCanviem(vioStressDefault, vioDispDefault, sensitivityStrs, sensitivityDisp);
+    [sensitivityStrs, sensitivityDisp] = calculateSensitivities(secs, vioStressDefault, vioDispDefault);
+    [newVals, lambda, col] = quinesBarresCanviem(vioStressDefault, vioDispDefault, sensitivityStrs, sensitivityDisp, secs, lambda, stepA);
 
     % Agafem els cinc que pitjor ratio S/L i els incrementem
-    secs(idx) = secs(idx) + 1;
-
+    secs = secs - newVals;
+    secs = min(37,max(1,secs));
     [weightDefault, vioStressDefault, vioDispDefault] = ISCSO_2022(secs,0);
+
+%     rho = dJ + lambda*dc ;
+%     lambda = lambda + rho*max(vioStressDefault,vioDispDefault);
 
     % Guardem cosetes
     iter = 1:comptador;
     costVec(comptador) = weightDefault;
     stressVioVec(comptador) = vioStressDefault;
     dispVioVec(comptador)   = vioDispDefault;
+    lambdas(comptador)      = lambda;
 
-    plotCostsConstraints(iter, secs, costVec, stressVioVec, dispVioVec, sensitivityStrs, sensitivityDisp, idx, col)
+    plotCostsConstraints(iter, secs, costVec, stressVioVec, dispVioVec, sensitivityStrs, sensitivityDisp, lambdas, col)
     comptador = comptador + 1;
     secs(secs==10) = 11;
 
-    if mod(comptador,5) == 0
-        % Cada cinc iteracions recalculem
-        idx = 1:336;
-    end
-
 end
-
-%% Fem decreixer arees
-% 
-% while true
-%     load('FinalHeuristicaWeight9081.mat')
-% 
-%     vioStresses = zeros(1,nBars);
-%     vioDispls   = zeros(1,nBars);
-%     
-%     for i = 1:nBars
-%         s(i) = secs(i) - 1;
-%         [weight, vioStress, vioDisp] = ISCSO_2022(s,0);
-%         vioStresses(i) = vioStress;
-%         vioDispls(i)   = vioDisp;
-%         s = secs;
-%     end
-% 
-%     sensitivityStrs =  vioStresses - vioStressDefault;
-%     sensitivityDisp =  vioDispls - vioDispDefault;
-% 
-%     [idx,col] = quinesBarresCanviem(vioStressDefault, vioDispDefault, sensitivityStrs, sensitivityDisp);
-% 
-%     % Agafem els cinc que pitjor ratio S/L i els incrementem
-%     secs(idx) = secs(idx) + 1;
-% 
-%     [weightDefault, vioStressDefault, vioDispDefault] = ISCSO_2022(secs,0);
-% 
-%     % Guardem cosetes
-%     iter = 1:comptador;
-%     costVec(comptador) = weightDefault;
-%     stressVioVec(comptador) = vioStressDefault;
-%     dispVioVec(comptador)   = vioDispDefault;
-% 
-%     plotCostsConstraints(iter, secs, costVec, stressVioVec, dispVioVec, sensitivityStrs, sensitivityDisp, idx, col)
-%     comptador = comptador + 1;
-%     secs(secs==11) = 10;
-% end
-
 
 %% Funcions
 
-function calculateSensitivities()
+
+function dJ = costGradient(secs)
+    barLengths = load('BarLengths2022.mat','barLengths').barLengths;
+    Si = load('AvailableSections.mat').Si;
+    dA = Si(secs+1) - Si(secs);
+    dAdx = dA/(secs+1 - secs);
+    dJ = 10^3*barLengths.*dAdx;
 end
 
-function [sens_Strs, sens_Disp] = calculateCertainSensitivities(secs, vioStrsPre, vioDispPre, idx)
+function [sens_Strs, sens_Disp] = calculateSensitivities(secs, vioStrsPre, vioDispPre)
+    Si = load('AvailableSections.mat').Si;
     nBars = length(secs);
-    vioStresses = zeros(1,nBars);
-    vioDispls   = zeros(1,nBars);
-    s = secs;
-    for i = idx
-        s(i) = secs(i) + 1;
-        [~, vioStress, vioDisp] = ISCSO_2022(s,0);
-        vioStresses(i) = vioStress;
-        vioDispls(i)   = vioDisp;
-        s = secs;
-    end
-    
-    sens_Strs =  vioStresses - vioStrsPre;
-    sens_Disp =  vioDispls   - vioDispPre;
-end
-
-function [sens_Strs, sens_Disp] = calculateFullSensitivities(secs, vioStrsPre, vioDispPre)
-    nBars = length(secs);
-    vioStresses = zeros(1,nBars);
-    vioDispls   = zeros(1,nBars);
     s = secs;
     for i = 1:nBars
         s(i) = secs(i) + 1;
         [~, vioStress, vioDisp] = ISCSO_2022(s,0);
-        vioStresses(i) = vioStress;
-        vioDispls(i)   = vioDisp;
+        dA = Si(s(i)) - Si(secs(i));
+        dAdx = dA/(secs(i)+1 - secs(i));
+        sens_Strs(i) = (vioStress - vioStrsPre)/(dA) * dAdx;
+        sens_Disp(i) = (vioDisp - vioDispPre)/(dA) * dAdx;
         s = secs;
     end
-    
-    sens_Strs =  vioStresses - vioStrsPre;
-    sens_Disp =  vioDispls   - vioDispPre;
 end
 
-function [idx,c] = quinesBarresCanviem(vioStress, vioDisp, sensitivityStrs, sensitivityDisp)
-    barLengths = load('BarLengths2022.mat','barLengths').barLengths;
-    perc = 0.25; % percentatge barres a canviar
-    perc2 = 0.35; % percentatge barres a canviar
+function [newVals, lambda, col] = quinesBarresCanviem(vioStress, vioDisp, sensitivityStrs, sensitivityDisp, secs, lambda, stepA)
+    rho = 1;
+    dJ = costGradient(secs);
+    if (vioStress>= vioDisp)
+        dC = sensitivityStrs;
+        c = vioStress;
+        col = ['og','or'];
+    else
+        dC = sensitivityDisp;
+        c = vioDisp;
+        col = ['or','og'];
+    end
 
-%     if (vioStress > 100 && vioDisp> 100)
-        if (vioStress>= vioDisp)
-            [~, idx] = sort(sensitivityStrs./barLengths*10^(-3), 'ascend');
-            barresAcanviar = round(max(1,perc*length(find(sensitivityStrs<0))));
-            idx = idx(1:barresAcanviar);
-            idx(sensitivityStrs(idx)>=0) = [];
-            c = ['og','or'];
-        else
-            [~, idx] = sort(sensitivityDisp./barLengths*10^(-3), 'ascend');
-            barresAcanviar = round(max(1,perc*length(find(sensitivityDisp<0))));
-            idx = idx(1:barresAcanviar);
-            idx(sensitivityDisp(idx)>=0) = [];
-            c = ['or','og'];
-        end
-%     else
-%         % We're in the endgame now
-%         if (vioStress>= vioDisp)
-%             [~, idx] = sort(sensitivityStrs./barLengths*10^(-3), 'ascend');
-%             barresAcanviar = round(max(1,perc2*length(find(sensitivityDisp<0))));
-%             idx = idx(1:barresAcanviar);
-%             idx(sensitivityStrs(idx)>=0) = [];
-%             c = ['og','or'];
-%         else
-%             [~, idx] = sort(sensitivityDisp./barLengths*10^(-3), 'ascend');
-%             barresAcanviar = round(max(1,perc2*length(find(sensitivityDisp<0))));
-%             idx = idx(1:barresAcanviar);
-%             idx(sensitivityDisp(idx)>=0) = [];
-%             c = ['or','og'];
-%         end
-%     end
+    isdCNeg = dC<0;
+    lambdaTrial = min(-dJ(isdCNeg)./dC(isdCNeg));
+
+    lambda = max(lambdaTrial + 0.001, lambda+rho*c);
+    dS = lambda*dC + dJ;
+    newVals = -round(stepA*dS/min(dS));
     
 
 end
 
-function plotCostsConstraints(iter, secs, weight, stressvio, dispvio, sStrs, sDisp, idx, col)
+function plotCostsConstraints(iter, secs, weight, stressvio, dispvio, sStrs, sDisp, lambdas, col)
 
     barLengths = load('BarLengths2022.mat','barLengths').barLengths;
 
-    subplot(2,3,1)
+    subplot(2,4,1)
     plot(iter, weight)
     title(num2str(weight(end)))
 
-    subplot(2,3,2)
+    subplot(2,4,2)
     plot(iter, stressvio)
     title(num2str(stressvio(end)))
 
-    subplot(2,3,3)
+    subplot(2,4,3)
     plot(iter, dispvio)
     title(num2str(dispvio(end)))
 
-    subplot(2,3,4)
-    bar(secs)
-    title([num2str(length(idx)),' barres canviades'])
+    subplot(2,4,4)
+    plot(iter, lambdas)
+    title(num2str(lambdas(end)))
 
-    subplot(2,3,5)
-    plot(barLengths, sStrs, 'ob', barLengths(idx), sStrs(idx), col(1:2))
+    subplot(2,4,5)
+    bar(secs)
+    title(['336 barres canviades'])
+
+    subplot(2,4,6)
+    plot(barLengths, sStrs, col(1:2))
     xlabel('approx length'), ylabel('stress sensitivity inf')
     title([num2str(length(find(sStrs<0))),' sens negatives'])
     grid minor
 
-    subplot(2,3,6)
-    plot(barLengths, sDisp, 'ob', barLengths(idx), sDisp(idx), col(3:4))
+    subplot(2,4,7)
+    plot(barLengths, sDisp, col(3:4))
     xlabel('approx length'), ylabel('stress sensitivity inf')
     title([num2str(length(find(sDisp<0))),' sens negatives'])
     grid minor
