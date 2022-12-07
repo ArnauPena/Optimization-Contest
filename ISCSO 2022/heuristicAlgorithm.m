@@ -67,6 +67,64 @@ while true
 end
 disp('Cannot descend more. Local minimum reached.')
 
+%% Interior point method
+
+load('minimumHeuristical7106.mat')
+[~, sCost, sStress, sDisp] = checkIfDecreasable(s)
+dJ = sCost;
+dC = max(sStress,sDisp);
+lambda = 100;
+dL = dJ + lambda*dC;
+[wPre, ~, ~] = ISCSO_2022(s,0);
+[vals,idx] = sort(dL);
+i = 0;
+% seccions = s;
+for b = 1:336
+    seccions = s;
+    seccions(idx(b)) = seccions(idx(b)) - 1;
+    while true
+        seccions(idx(end-i)) = seccions(idx(end-i)) + 1;
+        [w,vS,vD] = ISCSO_2022(seccions, 0);
+        if (vS ==0 && vD ==0 && w < wPre && i < 336)
+            return
+        end
+        i = i+1;
+    end
+end
+
+
+
+%% Plot
+
+load('minimumHeuristical7106.mat')
+% [isDec, sCost, sStrs, sDisp] = checkIfDecreasable(s);
+
+figure()
+subplot(3,1,1)
+bar(s)
+ylabel('Sections')
+
+subplot(3,1,2)
+bar(sCost)
+ylabel('Cost')
+
+% subplot(4,1,3)
+% bar(sStress)
+% ylabel('Stress')
+% 
+% subplot(4,1,4)
+% bar(sDisp)
+% ylabel('Displacement')
+
+subplot(3,1,3)
+bar(max(sDisp,sStrs))
+ylabel('Max of both')
+% subplot(4,1,4)
+% bar(sCost + l*max(sDisp,sStress))
+
+% subplot(4,1,4)
+% bar(lInv)
+% ylabel('\lambda')
 
 %% Funcions
 
