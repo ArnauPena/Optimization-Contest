@@ -70,7 +70,7 @@ disp('Cannot descend more. Local minimum reached.')
 %% Interior point method
 
 load('minimumHeuristical7106.mat')
-[~, sCost, sStress, sDisp] = checkIfDecreasable(s)
+[~, sCost, sStress, sDisp] = checkIfDecreasable(s);
 dJ = sCost;
 dC = max(sStress,sDisp);
 lambda = 100;
@@ -80,13 +80,20 @@ dL = dJ + lambda*dC;
 i = 0;
 % seccions = s;
 for b = 1:336
+    i = 0;
+    condition = true;
     seccions = s;
     seccions(idx(b)) = seccions(idx(b)) - 1;
-    while true
+    while condition
         seccions(idx(end-i)) = seccions(idx(end-i)) + 1;
         [w,vS,vD] = ISCSO_2022(seccions, 0);
-        if (vS ==0 && vD ==0 && w < wPre && i < 336)
+        if (vS ==0 && vD ==0 && w < wPre && i < 335 )
+            disp('i = ', num2str(i))
+            disp('b = ', num2str(b))
             return
+        end
+        if i==335
+            condition = false;
         end
         i = i+1;
     end
