@@ -52,17 +52,16 @@ end
 h = figure();
 costVect = 8235;
 s = load("FinalHeuristicaWeight8235.mat","secs").secs;
-it = 2;
 while true
-    [isDecreasable, sCost, sStress, sDisp] = checkIfDecreasable(s);
+    it = 2;
+    [isDecreasable, sCost, sStress, sDisp] = checkIfDecreasable(s)
     if ~any(isDecreasable)
         break
     end
     s  = decreaseMostFavorableBar(s,isDecreasable,sCost);
     [cost,stress,disp] = ISCSO_2022(s,0);
     iter = 1:it;
-    costVect(it) = cost;
-    it = it + 1;
+    costVect = [costVect,cost];
     plotDecreaseProcedure(sCost,sStress,sDisp,costVect,iter);
 end
 disp('Cannot descend more. Local minimum reached.')
@@ -89,7 +88,7 @@ function plotDecreaseProcedure(sCost,sStress,sDisp,cost,iter)
 
     subplot(2,2,4)
     plot(barLengths, sDisp, 'ob')
-    xlabel('approx length'), ylabel('disp sensitivity inf')
+    xlabel('approx length'), ylabel('stress sensitivity inf')
     title([num2str(length(find(sDisp == 0))),' sens 0'])
     grid minor
 
@@ -119,7 +118,7 @@ function [isDecreasable, sCost, sStress, sDisp] = checkIfDecreasable(s)
 end
 
 function s = decreaseMostFavorableBar(s,isDecreasable,sCost)
-    [~,idx] = sort(sCost,'ascend');
+    [~,idx] = sort(sCost,'descend');
     for i = 1:length(idx)
         if isDecreasable(idx(i))
             s(idx(i)) = s(idx(i)) - 1;

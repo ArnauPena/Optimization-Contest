@@ -7,7 +7,7 @@ classdef PreProcess < handle
     end
 
     properties (Access = private)
-        
+        Si
     end
 
     methods (Access = public)
@@ -17,12 +17,12 @@ classdef PreProcess < handle
         end
 
         function [f,c1,c2] = computeCostAndConstraints(obj,x)
-            [f,c1,c2] = ISCSO_2021(x,0);
+            [f,c1,c2] = ISCSO_2022(x,0);
             obj.functionEvaluations = obj.functionEvaluations + 1;
         end
 
         function c = computeConstraint(obj,x)
-            [~,c1,c2] = ISCSO_2021(x,0);
+            [~,c1,c2] = ISCSO_2022(x,0);
             c         = [c1,c2];
             obj.functionEvaluations = obj.functionEvaluations + 1;
         end
@@ -53,23 +53,24 @@ classdef PreProcess < handle
             x  = max(1,min(37,x));
             DC = zeros(length(x),2);
             c0 = obj.computeConstraint(x);
+            S = obj.Si;
             for i = 1:length(x)
                 x1 = x;
                 x2 = x;
                 if x(i) == 1
                     x1(i)   = x(i) + 1;
                     c1      = obj.computeConstraint(x1);
-                    DC(i,:) = 0.5*(c1 - c0);
+                    DC(i,:) = 0.5*(c1 - c0)./(S(x1(i)) - S(x(i)));
                 elseif x(i) == 37
                     x1(i)   = x(i) - 1;
                     c1      = obj.computeConstraint(x1);
-                    DC(i,:) = 0.5*(c0 - c1);
+                    DC(i,:) = 0.5*(c0 - c1)./(S(x(i)) - S(x1(i)));
                 else
                     x1(i)   = x(i) - 1;
                     x2(i)   = x(i) + 1;
                     c1      = obj.computeConstraint(x1);
                     c2      = obj.computeConstraint(x2);
-                    DC(i,:) = 0.5*(c2 - c1);
+                    DC(i,:) = 0.5*(c2 - c1)./(S(x2(i)) - S(x1(i)));
                 end
             end
             DC(:,1) = DC(:,1)/norm(DC(:,1),2);
@@ -79,6 +80,13 @@ classdef PreProcess < handle
         function x = updatePrimal(obj,x,g)
             t = obj.stepLength;
             x = x - t*g;
+            val1 = 9.5/36 - 1/36;
+            val2 = 11/36 - 1/36;
+            for i = 1:length(x)
+                if x(i) >= val1 && x(i) <= val2
+                    x(i) = val2;
+                end
+            end
             x = min(1,max(0,x));
         end
 
@@ -103,12 +111,13 @@ classdef PreProcess < handle
     methods (Access = private)
 
         function init(obj)
-            info.numOfDesignVariables   = 345;
+            info.numOfDesignVariables   = 336;
             info.numOfSections          = 37;
             info.density                = 7.85;
             obj.functionEvaluations     = 0;
             info.sections               = load("sectionsValue","Si").Si;
-            info.barsLength             = obj.computeBarsLength(info);
+            obj.Si                      = info.sections;
+            info.barsLength             = load("BarLengths2022.mat","barLengths").barLengths;
             info.costGradient           = @(x) obj.computeCostGradient(x);
             info.lengthLessCostGradient = obj.computeLengthLessCostGradient(info);
             obj.information             = info;

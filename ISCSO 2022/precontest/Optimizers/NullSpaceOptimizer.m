@@ -39,7 +39,7 @@ classdef NullSpaceOptimizer < handle
 
         function init(obj)
             obj.data           = PreProcess;
-            obj.designVariable = 0.1*ones(1,345);
+            obj.designVariable = 0.1*ones(1,336);
             obj.dualVariable   = zeros(2,1);
             obj.nIter          = 0;
         end
@@ -83,7 +83,7 @@ classdef NullSpaceOptimizer < handle
             if mNew < obj.mOld
                 obj.acceptableStep = true;
                 obj.meritNew = mNew;
-                factor = 1.2;
+                factor = 1.8;
                 obj.data.increaseStepLength(factor);
             elseif obj.data.stepLengthIsTooSmall()
                 error('Convergence could not be achieved (step length too small)')
@@ -132,7 +132,7 @@ classdef NullSpaceOptimizer < handle
             Dg      = obj.constraint.gradient;
             aJ      = 1;
             DmF     = aJ*(DJ + Dg*l);
-            factor  = 1e-3;
+            factor  = 1e-2;
             obj.data.computeFirstStepLength(DmF,x,factor);
         end
 
@@ -168,7 +168,7 @@ classdef NullSpaceOptimizer < handle
 
         function computeGradient(obj,x)
             obj.cost.gradient       = obj.data.computeCostGradient(x);
-            if ~mod(obj.nIter,5)
+            if ~mod(obj.nIter,1)
                 obj.constraint.gradient = obj.data.computeConstraintGradient(x);
             end
         end
@@ -180,7 +180,7 @@ classdef NullSpaceOptimizer < handle
             S  = (Dh'*Dh)^-1;
             aJ = 1;
             aC = 1;
-            f2 = 1;
+            f2 = 5;
             AC = f2*aC/aJ*S*h;
             AJ = -aC/aJ*S*Dh'*DJ;
             l  = AC + AJ;
