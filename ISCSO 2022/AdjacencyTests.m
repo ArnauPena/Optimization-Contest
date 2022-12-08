@@ -1,4 +1,3 @@
-function AdjacencyTests
 nBars = 336;
 % First iteration
 secs = 1    *ones(1,nBars);
@@ -37,6 +36,4 @@ figure(1)
 [x1, x2] = meshgrid(sort(1:nBars),sort(1:nBars));
 scatter(x1(:), x2(:), [], A(:), 'filled');
 drawnow
-end
-
 end

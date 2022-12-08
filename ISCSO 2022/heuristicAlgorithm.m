@@ -79,11 +79,15 @@ dL = dJ + lambda*dC;
 [vals,idx] = sort(dL);
 i = 0;
 % seccions = s;
-for b = 1:336
+for b = 230:1:336
     i = 0;
     condition = true;
     seccions = s;
-    seccions(idx(b)) = seccions(idx(b)) - 1;
+    if seccions(idx(b)) == 1
+    else
+        seccions(idx(b)) = seccions(idx(b)) - 1;
+    end
+    condition = true;
     while condition
         seccions(idx(end-i)) = seccions(idx(end-i)) + 1;
         [w,vS,vD] = ISCSO_2022(seccions, 0);
